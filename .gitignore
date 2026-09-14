@@ -1,5 +1,13 @@
+# This repository is PUBLIC (github.com/fabiomn97/AI-Builder).
+# Nothing personal or internal goes to the remote.
+
 # Personal profile for the MBA advisor workspace (15.S23 AI Builder Space).
-# Contains visa status, financial obligations, and career plans — kept on the
-# local machine only, not pushed to the remote. Remove this line if you decide
-# you want it versioned.
+# Contains visa status, financial obligations, and career plans.
 mba-advisor/my-profile.md
+
+# Sloan orientation packet — internal course materials containing staff names,
+# phone numbers, and internal SharePoint links. Kept local, not redistributed.
+mba-advisor/orientation-materials/
+
+# Advisor session notes, which quote the profile and the packet.
+mba-advisor/test-log.md
