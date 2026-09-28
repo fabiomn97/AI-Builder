@@ -811,7 +811,7 @@ function renderMain() {
   const hd = (key, label) => `<button type="button" data-sort="${key}"${sort.key === key ? " data-active" : ""}>${label}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button>`;
   let html = `<div class="list" role="table" aria-label="Sponsor targets"><div class="row head" role="row">
     <div>${hd("name", "Company")}</div><div title="Pick A, B or C for each company">${hd("prio", "Pri")}</div><div>${hd("status", "Stage")}</div><div class="c-s26">${hd("s26", "2026")}</div><div class="c-tier"><button type="button" data-act="tiers" title="Compare tiers">Tier</button></div>
-    <div class="c-owner">${hd("owner", "Owner")}</div><div class="c-contacts"><button type="button" disabled>People</button></div><div>${hd("next", "Next step")}</div><div style="text-align:right">${hd("money", "Ask")}</div></div>`;
+    <div class="c-owner">${hd("owner", "Owner")}</div><div class="c-contacts"><button type="button" disabled>Contacts</button></div><div>${hd("next", "Next step")}</div><div style="text-align:right">${hd("money", "Ask")}</div></div>`;
   if (!arr.length) html += `<div class="empty"><h3>No matches</h3><p>No company matches these filters.</p><button class="btn" type="button" data-act="clear">Clear filters</button></div>`;
   html += arr.map(r => `<div class="row item${r.id === openId ? " sel" : ""}" role="row" tabindex="0" data-open="${esc(r.id)}">
     <div class="c-co co"><div class="co-name">${esc(r.name)} ${flags(r)}</div><div class="co-sub">${esc(r.sector || "No sector")}${r.warm ? " · " + esc(r.warm) : ""}</div></div>
@@ -918,7 +918,7 @@ function renderSheet() {
     </section>
 
     <section class="sec">
-      <div class="sec-h"><h3>People to contact</h3><small>${(r.contacts || []).length} saved</small></div>
+      <div class="sec-h"><h3>Contacts</h3><small>${(r.contacts || []).length} saved</small></div>
       <div class="people" id="people">${renderPeople(r, ro)}</div>
       <div class="lbl-sm label">Find more on LinkedIn</div>
       <div class="finders">${finders(r)}</div>
@@ -987,8 +987,8 @@ function renderPeople(r, ro) {
       </div>
     </div>`).join("");
   if (editingContact === "new") html += contactForm({}, "new");
-  else if (!ro) html += `<div><button class="btn sm" type="button" data-act="add-contact">Add a person</button></div>`;
-  if (!cs.length && editingContact !== "new") html = `<div class="empty-note">No named people yet. Use the LinkedIn searches below to find the right person, then add them here.</div>` + html;
+  else if (!ro) html += `<div><button class="btn sm" type="button" data-act="add-contact">Add a contact</button></div>`;
+  if (!cs.length && editingContact !== "new") html = `<div class="empty-note">No contacts yet. Use the LinkedIn searches below to find the right person, then add them here.</div>` + html;
   return html;
 }
 function contactForm(c, i) {
@@ -1146,8 +1146,8 @@ const XL_COLS = [
   ["Next step", r => r.nextStep, 30], ["Next-step date", r => day(r.nextDate), 13], ["Last contact", r => day(r.lastContact), 13], ["SLO vetted", r => r.vetted ? "Yes" : "No", 10],
   ["Warm signal", r => r.warm, 24], ["2026 status", r => r.s26Status || "Not approached", 16], ["2026 tier", r => r.s26Tier, 11], ["2026 amount ($)", r => num(r.s26Amount), 14],
   ["2026 relationship notes", r => r.s26Warmth, 40], ["2026 notes", r => r.s26Notes, 40], ["Product", r => r.product, 28], ["Tags", r => r.tags, 32],
-  ["Lead warmth", r => r.leadWarmth, 18], ["Speaking opportunity", r => r.speaking, 20], ["People (count)", r => (r.contacts || []).length, 9],
-  ["People", r => (r.contacts || []).map(c => [c.name, c.title].filter(Boolean).join(", ") + (c.email ? ` <${c.email}>` : "")).join("\n"), 44],
+  ["Lead warmth", r => r.leadWarmth, 18], ["Speaking opportunity", r => r.speaking, 20], ["Contacts (count)", r => (r.contacts || []).length, 9],
+  ["Contacts", r => (r.contacts || []).map(c => [c.name, c.title].filter(Boolean).join(", ") + (c.email ? ` <${c.email}>` : "")).join("\n"), 44],
   ["Why they'd sponsor", r => r.fit, 50], ["MIT ties", r => r.mitTies, 50], ["Programs", r => r.programs, 40], ["Public channel", r => r.channel, 30],
   ["Notes", r => r.notes, 44], ["Sources", r => (r.sources || []).join("\n"), 44], ["Research incomplete", r => r.unverified ? "Yes" : "", 10],
   ["Last updated", r => r.updatedAt ? new Date(r.updatedAt).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "", 22],
