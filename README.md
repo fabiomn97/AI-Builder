@@ -32,3 +32,7 @@ To update the CV, replace `site/assets/Fabio-Macedo-CV.pdf` and rebuild.
 - Prints cleanly to PDF (7 pages, no nav, no shadows, no orphaned headings).
 - Works with JavaScript disabled — nothing is hidden, and the CV buttons fall back to the
   LinkedIn profile.
+
+## Other projects
+
+- `sponsors/` — sponsor pipeline tracker for the 2027 MIT Sloan Tech Summit. See `sponsors/README.md`.
