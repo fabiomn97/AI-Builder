@@ -162,13 +162,16 @@ select.f { padding-right: 28px; appearance: none; background-image: linear-gradi
 .prio.C { background: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-2); }
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; padding: 3px 9px 3px 7px; border-radius: 99px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pill i { width: 7px; height: 7px; border-radius: 50%; flex: none; background: currentColor; }
-.st-not_started { background: var(--muted-soft); color: var(--ink-2); }
-.st-contacted { background: var(--info-soft); color: var(--info); }
-.st-talking { background: var(--warn-soft); color: var(--warn); }
-.st-proposal { background: var(--accent-soft); color: var(--accent); }
-.st-committed { background: var(--good-soft); color: var(--good); }
-.st-declined { background: var(--bad-soft); color: var(--bad); }
-.st-hold { background: var(--muted-soft); color: var(--ink-3); }
+/* Stage colors: defaults follow the theme; a team's own picks (Settings) override them on :root. */
+:root { --st-ns_email: var(--good); --st-ns_none: var(--line-2); --st-contacted: var(--info); --st-talking: var(--warn); --st-proposal: var(--accent); --st-committed: var(--good); --st-declined: var(--bad); --st-hold: var(--ink-3); }
+.stp { background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--ink)); }
+.stp i { background: var(--c); }
+.swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.swatch { display: flex; align-items: center; gap: 10px; font-size: 13.5px; min-width: 0; }
+.swatch input[type="color"] { width: 34px; height: 28px; padding: 2px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); cursor: pointer; flex: none; }
+.swatch input[type="color"]:disabled { cursor: default; }
+.swatch span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) { .swatches { grid-template-columns: minmax(0, 1fr); } }
 .y26 { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
 .y26 i { width: 8px; height: 8px; border-radius: 2px; flex: none; background: var(--line-2); }
 .y26 small { font: 500 11px/1 var(--f-mono); color: var(--ink-3); }
@@ -367,7 +370,7 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
           <label for="file-import" id="act-import">Import JSON<small>Merges by company; newer edits win</small></label>
           <hr>
           <button type="button" data-act="tiers">Sponsorship tiers<small>What each tier includes</small></button>
-          <button type="button" data-act="settings">Settings<small>Goal, your name for email drafts</small></button>
+          <button type="button" data-act="settings">Settings<small>Goal, stage colors, your name for email drafts</small></button>
           <button type="button" data-act="reset" id="act-reset" hidden>Reset to repo data<small>Discards this browser's edits</small></button>
         </div>
         <input type="file" id="file-import" accept="application/json,.json" class="sr">
@@ -450,10 +453,10 @@ const STAGE = Object.fromEntries(STAGES.map(s => [s.id, s]));
 /* "Not started" is split by whether a contact email is on file, so the team can see who is ready to email. */
 const hasEmail = r => (r.contacts || []).some(c => /\S+@\S+\.\S+/.test(c.email || ""));
 const VIEW_STAGES = [
-  { id: "ns_email", status: "not_started", label: "Not started · has email", color: "var(--good)" },
-  { id: "ns_none", status: "not_started", label: "Not started · needs email", color: "var(--line-2)" },
+  { id: "ns_email", status: "not_started", label: "Not started · has email" },
+  { id: "ns_none", status: "not_started", label: "Not started · needs email" },
   ...STAGES.slice(1).map(s => ({ ...s, status: s.id })),
-];
+].map(s => ({ ...s, color: `var(--st-${s.id})` }));
 const VIEW_STAGE = Object.fromEntries(VIEW_STAGES.map(s => [s.id, s]));
 const viewStage = r => r.status === "not_started" ? (hasEmail(r) ? "ns_email" : "ns_none") : r.status;
 const ICON_MAIL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="m2.5 4.5 5.5 4.5 5.5-4.5"/></svg>';
@@ -554,14 +557,14 @@ async function boot() {
       for (const [id, p] of pending) { const cur = next.get(id); if (cur) next.set(id, { ...cur, ...p.inflight, ...p.patch }); }
       items = next; render(); resolveNames();
     }, err => { console.warn(err); toast("Live updates stopped. Reload the page to reconnect."); });
-    db.doc("meta/settings").onSnapshot(s => { settings = { goal: 0, ...(s.exists ? s.data() : {}) }; renderSummary(); }, () => {});
+    db.doc("meta/settings").onSnapshot(s => { settings = { goal: 0, ...(s.exists ? s.data() : {}) }; applyStageColors(); renderSummary(); }, () => {});
   } else {
     setMode("local");
     const stored = loadJSON(LS_DATA, null);
     let base = stored;
     if (!base) base = await loadRepoData();
     items = new Map((base || []).map(r => [r.id, normalize(r)]));
-    settings = { goal: 0, ...(loadJSON(LS_SETTINGS, {}) || {}) };
+    settings = { goal: 0, ...(loadJSON(LS_SETTINGS, {}) || {}) }; applyStageColors();
     render();
   }
 }
@@ -745,7 +748,7 @@ function renderSummary() {
   $("#vet-count").textContent = all.length ? `${vetted} of ${all.length} vetted` : "";
 }
 
-function statusPill(s) { const st = STAGE[s] || STAGE.not_started; return `<span class="pill st-${st.id}"><i></i>${esc(st.label)}</span>`; }
+function statusPill(r) { const v = viewStage(r), st = STAGE[r.status] || STAGE.not_started; return `<span class="pill stp" style="--c:var(--st-${v})"><i></i>${esc(st.label)}</span>`; }
 function mailBadge(r) {
   if (r.status !== "not_started") return "";
   return hasEmail(r) ? `<span class="mail ok" title="A contact email is on file">${ICON_MAIL}<span class="sr">Has email</span></span>`
@@ -807,7 +810,7 @@ function renderMain() {
   html += arr.map(r => `<div class="row item${r.id === openId ? " sel" : ""}" role="row" tabindex="0" data-open="${esc(r.id)}">
     <div class="c-co co"><div class="co-name">${esc(r.name)} ${flags(r)}</div><div class="co-sub">${esc(r.sector || "No sector")}${r.warm ? " · " + esc(r.warm) : ""}</div></div>
     <div class="c-prio">${prioPick(r)}</div>
-    <div class="c-status">${statusPill(r.status)}${mailBadge(r)}<span class="owner-inline">${esc(r.owner ? "· " + r.owner : "· Unassigned")}</span></div>
+    <div class="c-status">${statusPill(r)}${mailBadge(r)}<span class="owner-inline">${esc(r.owner ? "· " + r.owner : "· Unassigned")}</span></div>
     <div class="c-s26">${s26Chip(r)}</div>
     <div class="c-tier">${tierPick(r)}</div>
     <div class="c-owner cell-2${r.owner ? "" : " none"}">${esc(r.owner || "Unassigned")}</div>
@@ -822,7 +825,7 @@ function renderBoard(arr) {
   const canDrag = mode !== "readonly";
   $("#main").innerHTML = `<div class="board">${VIEW_STAGES.map(s => {
     const col = arr.filter(r => viewStage(r) === s.id);
-    return `<div class="col" data-col="${s.status}"><div class="col-h"><span class="pill st-${s.status}"><i></i>${esc(s.label)}</span><span class="n">${col.length}</span></div>
+    return `<div class="col" data-col="${s.status}"><div class="col-h"><span class="pill stp" style="--c:var(--st-${s.id})"><i></i>${esc(s.label)}</span><span class="n">${col.length}</span></div>
       ${col.map(r => `<div class="card" data-open="${esc(r.id)}" tabindex="0"${canDrag ? ' draggable="true"' : ""} data-id="${esc(r.id)}">
         <div class="top-l"><div class="co-name">${esc(r.name)}</div>${prioPick(r)}</div>
         <div class="meta"><span>${esc(r.owner || "Unassigned")}</span>${r.tier ? `<span>${esc(r.tier)}</span>` : ""}${r.committed != null || r.ask != null ? `<span class="mono">${esc(money(r.committed ?? r.ask))}</span>` : ""}</div>
@@ -1083,11 +1086,30 @@ function openSettings() {
     <p>The goal is shared with everyone who uses this tracker${mode === "local" ? " in this browser" : ""}.</p>
     <label class="fl"><span>Your name, for email drafts</span><input class="f" id="s-me" value="${esc(prefs.me || "")}" placeholder="First Last"></label>
     <p>Your name is saved only in this browser.</p>
+    <div class="sec-h"><h3>Stage colors</h3><button class="linkish" type="button" data-act="reset-colors"${mode === "readonly" ? " hidden" : ""}>Reset to defaults</button></div>
+    <div class="swatches">${VIEW_STAGES.map(s => `<label class="swatch"><input type="color" id="s-col-${s.id}" data-stage-color="${s.id}" value="${esc(toHex(getComputedStyle(document.documentElement).getPropertyValue(`--st-${s.id}`)))}"${mode === "readonly" ? " disabled" : ""}><span>${esc(s.label)}</span></label>`).join("")}</div>
+    <p>Colors are shared with everyone who uses this tracker${mode === "local" ? " in this browser" : ""}.</p>
     <div class="row-btns"><button class="btn" type="button" data-act="close-modal">Cancel</button><button class="btn primary" type="submit">Save</button></div>
   </form>`;
   m.hidden = false;
 }
-function closeModal() { $("#modal").hidden = true; $("#modal").innerHTML = ""; }
+function closeModal() { $("#modal").hidden = true; $("#modal").innerHTML = ""; applyStageColors(); }
+/* Stage colors: store only the team's overrides as #rrggbb; everything else keeps the theme default. */
+const HEX = /^#[0-9a-f]{6}$/i;
+function applyStageColors(colors = settings.stageColors || {}) {
+  const root = document.documentElement.style;
+  VIEW_STAGES.forEach(s => { const c = colors[s.id]; if (c && HEX.test(c)) root.setProperty(`--st-${s.id}`, c); else root.removeProperty(`--st-${s.id}`); });
+}
+function toHex(color) {
+  const cx = document.createElement("canvas").getContext("2d"); cx.fillStyle = "#000"; cx.fillStyle = color.trim(); const v = cx.fillStyle;
+  if (HEX.test(v)) return v;
+  const m = v.match(/\d+(\.\d+)?/g); return m ? "#" + m.slice(0, 3).map(n => Math.round(+n).toString(16).padStart(2, "0")).join("") : "#888888";
+}
+function stageDefault(id) {
+  const root = document.documentElement.style, cur = root.getPropertyValue(`--st-${id}`);
+  root.removeProperty(`--st-${id}`); const v = toHex(getComputedStyle(document.documentElement).getPropertyValue(`--st-${id}`));
+  if (cur) root.setProperty(`--st-${id}`, cur); return v;
+}
 
 /* ——— export / import ——— */
 function exportRows() { return [...items.entries()].map(([id, r]) => ({ id, ...r })).sort((a, b) => a.name.localeCompare(b.name)); }
@@ -1205,6 +1227,7 @@ document.addEventListener("click", async e => {
     case "json": return offerFile("sts-2027-sponsors.json", JSON.stringify(exportRows(), null, 2), "application/json");
     case "settings": return openSettings();
     case "tiers": return openTiers();
+    case "reset-colors": document.querySelectorAll("[data-stage-color]").forEach(el => { const id = el.dataset.stageColor; document.documentElement.style.removeProperty(`--st-${id}`); el.value = stageDefault(id); }); return renderSummary();
     case "reset":
       try { localStorage.removeItem(LS_DATA); } catch {}
       items = new Map((await loadRepoData()).map(r => [r.id, normalize(r)])); render(); return toast("Reset to the data in the repo");
@@ -1288,6 +1311,11 @@ async function copyText(text, msg) {
 }
 
 /* modals */
+/* Live preview while picking a stage color; Cancel restores the saved colors. */
+$("#modal").addEventListener("input", e => {
+  const el = e.target; if (!el.dataset || !el.dataset.stageColor || !HEX.test(el.value)) return;
+  document.documentElement.style.setProperty(`--st-${el.dataset.stageColor}`, el.value);
+});
 $("#modal").addEventListener("submit", async e => {
   e.preventDefault();
   if (e.target.id === "add-form") {
@@ -1300,7 +1328,11 @@ $("#modal").addEventListener("submit", async e => {
   }
   if (e.target.id === "settings-form") {
     prefs.me = $("#s-me").value.trim(); savePrefs();
-    if (mode !== "readonly") { const g = $("#s-goal").value; await saveSettings({ goal: g === "" ? 0 : Math.max(0, Number(g)) }); }
+    if (mode !== "readonly") {
+      const g = $("#s-goal").value, colors = {};
+      document.querySelectorAll("[data-stage-color]").forEach(el => { const id = el.dataset.stageColor; if (HEX.test(el.value) && el.value.toLowerCase() !== stageDefault(id).toLowerCase()) colors[id] = el.value.toLowerCase(); });
+      await saveSettings({ goal: g === "" ? 0 : Math.max(0, Number(g)), stageColors: colors });
+    }
     closeModal(); if (openId) renderSheet(); toast("Settings saved");
   }
 });
