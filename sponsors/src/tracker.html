@@ -174,14 +174,9 @@ select.f { padding-right: 28px; appearance: none; background-image: linear-gradi
 .swatch input[type="color"]:disabled { cursor: default; }
 .swatch span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 480px) { .swatches { grid-template-columns: minmax(0, 1fr); } }
-.y26 { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
-.y26 i { width: 8px; height: 8px; border-radius: 2px; flex: none; background: var(--line-2); }
+/* The 2026 column is plain text on purpose, so it isn't confused with this year's stage colors. */
+.y26 { display: inline-flex; align-items: baseline; gap: 5px; font-size: 12.5px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
 .y26 small { font: 500 11px/1 var(--f-mono); color: var(--ink-3); }
-.y26.s-confirmed { color: var(--good); } .y26.s-confirmed i { background: var(--good); }
-.y26.s-interest { color: var(--warn); } .y26.s-interest i { background: var(--warn); }
-.y26.s-sent i { background: var(--info); }
-.y26.s-ghosted i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-3); }
-.y26.s-declined { color: var(--bad); } .y26.s-declined i { background: var(--bad); }
 .y26.s-none { color: var(--ink-3); }
 .lastyear { background: var(--sunk); border-radius: 8px; padding: 14px; display: grid; gap: 12px; }
 .lastyear .sec-h { border-bottom-color: var(--line-2); }
@@ -780,7 +775,7 @@ function pickPatch(r, f, v) {
 function s26Chip(r) {
   const s = S26BY[r.s26Status || ""] || { cls: "none", id: r.s26Status };
   const extra = r.s26Status === "Confirmed" && r.s26Amount ? ` <small>$${esc(Math.round(r.s26Amount / 1000))}k</small>` : "";
-  return `<span class="y26 s-${s.cls}" title="2026 Summit: ${esc(s.label || s.id)}"><i></i>${esc(s.label || s.id)}${extra}</span>`;
+  return `<span class="y26 s-${s.cls}" title="2026 Summit: ${esc(s.label || s.id)}">${esc(s.label || s.id)}${extra}</span>`;
 }
 function nextCell(r) {
   if (!r.nextStep && !r.nextDate) return `<span class="cell-2 none">No next step</span>`;
