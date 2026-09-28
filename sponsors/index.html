@@ -150,7 +150,7 @@ select.f { padding-right: 28px; appearance: none; background-image: linear-gradi
 
 /* ——— list ——— */
 .list { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.row { display: grid; grid-template-columns: minmax(0, 2.3fr) 44px minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, .9fr) 64px minmax(0, 2fr) 92px; gap: 12px; align-items: center; padding: 11px 16px; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: minmax(0, 2.2fr) 40px minmax(0, 1.15fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, .85fr) 52px minmax(0, 1.8fr) 84px; gap: 12px; align-items: center; padding: 11px 16px; border-top: 1px solid var(--line); }
 .row.head { border-top: 0; background: var(--sunk); padding-block: 8px; }
 .row.head button { background: none; border: 0; padding: 0; cursor: pointer; font: 500 11px/1.2 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); text-align: left; display: inline-flex; gap: 4px; align-items: center; }
 .row.head button[data-active] { color: var(--ink); }
@@ -178,6 +178,17 @@ select.f { padding-right: 28px; appearance: none; background-image: linear-gradi
 .st-committed { background: var(--good-soft); color: var(--good); }
 .st-declined { background: var(--bad-soft); color: var(--bad); }
 .st-hold { background: var(--muted-soft); color: var(--ink-3); }
+.y26 { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
+.y26 i { width: 8px; height: 8px; border-radius: 2px; flex: none; background: var(--line-2); }
+.y26 small { font: 500 11px/1 var(--f-mono); color: var(--ink-3); }
+.y26.s-confirmed { color: var(--good); } .y26.s-confirmed i { background: var(--good); }
+.y26.s-interest { color: var(--warn); } .y26.s-interest i { background: var(--warn); }
+.y26.s-sent i { background: var(--info); }
+.y26.s-ghosted i { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.y26.s-declined { color: var(--bad); } .y26.s-declined i { background: var(--bad); }
+.y26.s-none { color: var(--ink-3); }
+.lastyear { background: var(--sunk); border-radius: 8px; padding: 14px; display: grid; gap: 12px; }
+.lastyear .sec-h { border-bottom-color: var(--line-2); }
 .cell-2 { color: var(--ink-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cell-2.none { color: var(--ink-3); }
 .next { display: grid; gap: 1px; font-size: 13px; }
@@ -271,15 +282,15 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
 @media (max-width: 1080px) {
   .summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .summary > section:nth-child(2) { grid-column: 1 / -1; grid-row: 2; border-left: 0; border-top: 1px solid var(--line); }
-  .row { grid-template-columns: minmax(0, 2.2fr) 40px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 2fr) 84px; }
-  .row .c-tier, .row .c-contacts { display: none; }
+  .row { grid-template-columns: minmax(0, 2.1fr) 40px minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, 1.9fr) 84px; }
+  .row .c-tier, .row .c-contacts, .row .c-owner { display: none; }
 }
 @media (max-width: 720px) {
   .summary { grid-template-columns: minmax(0, 1fr); }
   .summary > section + section { border-left: 0; border-top: 1px solid var(--line); }
   .summary > section:nth-child(2) { grid-row: auto; }
   .row.head { display: none; }
-  .row.item { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "p co money" "p st st" "p nx nx"; gap: 6px 10px; padding: 12px 14px; }
+  .row.item { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "p co money" "p st st" "p y y" "p nx nx"; gap: 6px 10px; padding: 12px 14px; }
   .row .c-prio { grid-area: p; align-self: start; }
   .row .c-co { grid-area: co; }
   .row .c-status { grid-area: st; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -287,6 +298,7 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
   .row .c-next { grid-area: nx; }
   .row .c-money { grid-area: money; align-self: start; }
   .row .c-status .owner-inline { display: inline; }
+  .row .c-s26 { grid-area: y; }
   .row .c-money .a { display: none; }
   .fact { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .count { width: 100%; margin-left: 0; }
@@ -313,7 +325,8 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
       <div class="menu">
         <button class="btn" id="btn-data" type="button" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 12v2h10v-2"/></svg>Data</button>
         <div class="menu-pop" id="menu-data" hidden>
-          <button type="button" data-act="csv">Export CSV<small>One row per company, for Sheets or Excel</small></button>
+          <button type="button" data-act="xlsx">Export Excel<small>Companies and contacts, every field, one sheet each</small></button>
+          <button type="button" data-act="csv">Export CSV<small>One row per company</small></button>
           <button type="button" data-act="json">Export JSON<small>Full backup, including contacts</small></button>
           <label for="file-import">Import JSON<small>Merges by company; newer edits win</small></label>
           <hr>
@@ -362,6 +375,8 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
     </select>
     <label class="sr" for="f-owner">Owner</label>
     <select class="f" id="f-owner"></select>
+    <label class="sr" for="f-s26">2026 status</label>
+    <select class="f" id="f-s26"></select>
     <div class="seg" role="group" aria-label="View">
       <button type="button" id="v-list" aria-pressed="true">List</button>
       <button type="button" id="v-board" aria-pressed="false">Board</button>
@@ -379,6 +394,7 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
 <div class="modal" id="modal" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (() => {
 "use strict";
@@ -394,8 +410,14 @@ const STAGES = [
   { id: "hold",        label: "On hold",     color: "var(--ink-3)" },
 ];
 const STAGE = Object.fromEntries(STAGES.map(s => [s.id, s]));
-const TIERS = ["", "Premier", "Gold", "Silver", "Networking table", "Hackathon / in-kind", "Partner (non-cash)"];
-const SECTORS = ["Big Tech & Cloud", "AI & Data", "Fintech & Finance", "Consulting", "Venture Capital", "Boston Tech", "Enterprise & Industrial"];
+const TIERS = ["", "Petabyte", "Terabyte", "Premier", "Gold", "Silver", "Networking table", "Hackathon / in-kind", "Partner (non-cash)"];
+/* How each company ended up at the 2026 Summit, from the team's 2026 tracker. */
+const S26 = [
+  { id: "Confirmed", cls: "confirmed" }, { id: "Received Interest", cls: "interest" }, { id: "Outreach Sent", cls: "sent" },
+  { id: "Ghosted", cls: "ghosted" }, { id: "Declined", cls: "declined" }, { id: "", cls: "none", label: "Not approached" },
+];
+const S26BY = Object.fromEntries(S26.map(x => [x.id, x]));
+const SECTORS = ["Big Tech & Cloud", "AI & Data", "Fintech & Finance", "Consulting", "Venture Capital", "Boston Tech", "Enterprise & Industrial", "Health & Bio AI", "Ecosystem & Community"];
 const PRIO_ORDER = { A: 0, B: 1, C: 2 };
 const LS_DATA = "sts27.targets.v1", LS_SETTINGS = "sts27.settings.v1", LS_PREFS = "sts27.prefs.v1";
 
@@ -406,7 +428,7 @@ let items = new Map();          // id -> record
 let settings = { goal: 0 };
 let prefs = loadJSON(LS_PREFS, {}) || {};
 let view = prefs.view || "list";
-let filters = { q: "", sector: "", prio: "", owner: "", stage: "" };
+let filters = { q: "", sector: "", prio: "", owner: "", stage: "", s26: "__all" };
 let sort = prefs.sort || { key: "prio", dir: 1 };
 let openId = null;
 let editingContact = null;      // index or "new"
@@ -432,6 +454,8 @@ function normalize(r) {
     name: "", sector: "", priority: "B", tier: "", status: "not_started", owner: "", ask: null, committed: null,
     nextStep: "", nextDate: "", lastContact: "", vetted: false, warm: "", unverified: false,
     fit: "", angle: "", mitTies: "", programs: "", channel: "", contacts: [], sources: [], notes: "",
+    product: "", tags: "", leadWarmth: "", speaking: "",
+    s26Status: "", s26Tier: "", s26Amount: null, s26Warmth: "", s26Notes: "",
     updatedAt: "", updatedBy: "", ...r,
   };
 }
@@ -556,7 +580,8 @@ function filtered() {
     (!filters.prio || r.priority === filters.prio) &&
     (!filters.owner || (filters.owner === "__none" ? !r.owner : r.owner === filters.owner)) &&
     (!filters.stage || r.status === filters.stage) &&
-    (!q || [r.name, r.sector, r.owner, r.notes, r.fit, r.mitTies, r.warm, r.nextStep, ...(r.contacts || []).map(c => c.name + " " + c.title)].join(" ").toLowerCase().includes(q))
+    (filters.s26 === "__all" || (r.s26Status || "") === filters.s26) &&
+    (!q || [r.name, r.sector, r.owner, r.notes, r.fit, r.mitTies, r.warm, r.nextStep, r.product, r.tags, r.s26Status, r.s26Warmth, r.s26Notes, ...(r.contacts || []).map(c => c.name + " " + c.title + " " + (c.email || ""))].join(" ").toLowerCase().includes(q))
   );
   const k = sort.key, d = sort.dir;
   const stageIdx = s => STAGES.findIndex(x => x.id === s);
@@ -567,6 +592,7 @@ function filtered() {
     else if (k === "status") { x = stageIdx(a.status); y = stageIdx(b.status); }
     else if (k === "owner") { return d * ((a.owner || "~").localeCompare(b.owner || "~")); }
     else if (k === "next") { x = a.nextDate || "9999"; y = b.nextDate || "9999"; return d * x.localeCompare(y); }
+    else if (k === "s26") { const o = s => { const i = S26.findIndex(x => x.id === (s || "")); return i < 0 ? 9 : i; }; x = o(a.s26Status); y = o(b.s26Status); }
     else if (k === "money") { x = -(a.committed || a.ask || 0); y = -(b.committed || b.ask || 0); }
     if (x !== y) return d * (x < y ? -1 : 1);
     return a.name.localeCompare(b.name);
@@ -587,6 +613,8 @@ function renderFilters() {
   const own = $("#f-owner"), co = filters.owner;
   const owners = [...new Set([...items.values()].map(r => r.owner).filter(Boolean))].sort();
   own.innerHTML = '<option value="">Owner</option><option value="__none"' + (co === "__none" ? " selected" : "") + '>Unassigned</option>' + owners.map(o => `<option${o === co ? " selected" : ""}>${esc(o)}</option>`).join("");
+  const y = $("#f-s26"), cy = filters.s26;
+  y.innerHTML = `<option value="__all"${cy === "__all" ? " selected" : ""}>2026 status</option>` + S26.map(x => `<option value="${esc(x.id)}"${x.id === cy ? " selected" : ""}>${esc(x.label || x.id)}</option>`).join("");
   let dl = document.getElementById("owners-dl");
   if (!dl) { dl = document.createElement("datalist"); dl.id = "owners-dl"; document.body.appendChild(dl); }
   dl.innerHTML = owners.map(o => `<option value="${esc(o)}">`).join("");
@@ -600,7 +628,9 @@ function renderSummary() {
   const nCommitted = all.filter(r => r.status === "committed").length;
   $("#sum-committed").innerHTML = esc(money(committed) || "$0") + (settings.goal ? `<small>of ${esc(money(settings.goal))}</small>` : "");
   $("#sum-meter").style.width = settings.goal ? Math.min(100, committed / settings.goal * 100).toFixed(1) + "%" : "0%";
+  const last = all.filter(r => r.s26Status === "Confirmed"), lastSum = last.reduce((s, r) => s + Number(r.s26Amount || 0), 0);
   $("#sum-goal").innerHTML = `<span><b class="num">${nCommitted}</b> committed</span><span><b class="num">${esc(money(openAsk) || "$0")}</b> open asks</span>` +
+    (last.length ? `<span>2026: <b class="num">${esc(money(lastSum))}</b> from ${last.length} sponsors</span>` : "") +
     (settings.goal ? "" : (mode !== "readonly" ? ` <button class="linkish" type="button" data-act="settings">Set a goal</button>` : ""));
 
   const counts = Object.fromEntries(STAGES.map(s => [s.id, 0]));
@@ -622,6 +652,11 @@ function renderSummary() {
 }
 
 function statusPill(s) { const st = STAGE[s] || STAGE.not_started; return `<span class="pill st-${st.id}"><i></i>${esc(st.label)}</span>`; }
+function s26Chip(r) {
+  const s = S26BY[r.s26Status || ""] || { cls: "none", id: r.s26Status };
+  const extra = r.s26Status === "Confirmed" && r.s26Amount ? ` <small>$${esc(Math.round(r.s26Amount / 1000))}k</small>` : "";
+  return `<span class="y26 s-${s.cls}" title="2026 Summit: ${esc(s.label || s.id)}"><i></i>${esc(s.label || s.id)}${extra}</span>`;
+}
 function nextCell(r) {
   if (!r.nextStep && !r.nextDate) return `<span class="cell-2 none">No next step</span>`;
   const d = daysUntil(r.nextDate), cls = d === null ? "" : d < 0 ? " over" : d <= 3 ? " soon" : "";
@@ -646,13 +681,14 @@ function renderMain() {
   if (view === "board") return renderBoard(arr);
   const hd = (key, label) => `<button type="button" data-sort="${key}"${sort.key === key ? " data-active" : ""}>${label}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button>`;
   let html = `<div class="list" role="table" aria-label="Sponsor targets"><div class="row head" role="row">
-    <div>${hd("name", "Company")}</div><div>${hd("prio", "Pri")}</div><div>${hd("status", "Stage")}</div><div class="c-tier"><button type="button" disabled>Tier</button></div>
+    <div>${hd("name", "Company")}</div><div>${hd("prio", "Pri")}</div><div>${hd("status", "Stage")}</div><div class="c-s26">${hd("s26", "2026")}</div><div class="c-tier"><button type="button" disabled>Tier</button></div>
     <div class="c-owner">${hd("owner", "Owner")}</div><div class="c-contacts"><button type="button" disabled>People</button></div><div>${hd("next", "Next step")}</div><div style="text-align:right">${hd("money", "Ask")}</div></div>`;
   if (!arr.length) html += `<div class="empty"><h3>No matches</h3><p>No company matches these filters.</p><button class="btn" type="button" data-act="clear">Clear filters</button></div>`;
   html += arr.map(r => `<div class="row item${r.id === openId ? " sel" : ""}" role="row" tabindex="0" data-open="${esc(r.id)}">
     <div class="c-co co"><div class="co-name">${esc(r.name)} ${flags(r)}</div><div class="co-sub">${esc(r.sector || "No sector")}${r.warm ? " · " + esc(r.warm) : ""}</div></div>
     <div class="c-prio"><span class="prio ${esc(r.priority)}" title="Priority ${esc(r.priority)}">${esc(r.priority)}</span></div>
     <div class="c-status">${statusPill(r.status)}<span class="owner-inline">${esc(r.owner ? "· " + r.owner : "· Unassigned")}</span></div>
+    <div class="c-s26">${s26Chip(r)}</div>
     <div class="c-tier cell-2${r.tier ? "" : " none"}">${esc(r.tier || "—")}</div>
     <div class="c-owner cell-2${r.owner ? "" : " none"}">${esc(r.owner || "Unassigned")}</div>
     <div class="c-contacts contacts-n">${(r.contacts || []).length}</div>
@@ -733,8 +769,24 @@ function renderSheet() {
       <label class="fl full"><span>Next step</span><input class="f" id="e-nextStep" data-f="nextStep" placeholder="e.g. Send deck to recruiting lead" value="${esc(r.nextStep)}"${ro}></label>
       <label class="fl"><span>Next-step date</span><input class="f" id="e-nextDate" data-f="nextDate" type="date" value="${esc(r.nextDate)}"${ro}></label>
       <label class="fl"><span>Last contact</span><input class="f" id="e-lastContact" data-f="lastContact" type="date" value="${esc(r.lastContact)}"${ro}></label>
+      <label class="fl full"><span>Product</span><input class="f" id="e-product" data-f="product" placeholder="What they sell" value="${esc(r.product)}"${ro}></label>
+      <label class="fl full"><span>Tags</span><input class="f" id="e-tags" data-f="tags" placeholder="e.g. Boston HQ, MIT Alumni Founder, AI-native" value="${esc(r.tags)}"${ro}></label>
+      <label class="fl"><span>Lead warmth</span><input class="f" id="e-leadWarmth" data-f="leadWarmth" placeholder="Who knows them, how warm" value="${esc(r.leadWarmth)}"${ro}></label>
+      <label class="fl"><span>Speaking opportunity</span><input class="f" id="e-speaking" data-f="speaking" placeholder="Speaker, panel, workshop…" value="${esc(r.speaking)}"${ro}></label>
       <label class="check full"><input type="checkbox" id="e-vetted" data-f="vetted"${r.vetted ? " checked" : ""}${ro}> Vetted by the Student Life Office</label>
     </div>
+
+    <section class="sec lastyear">
+      <div class="sec-h"><h3>2026 Summit</h3><small>From last year's tracker</small></div>
+      <div class="grid2">
+        <label class="fl"><span>2026 status</span><select class="f" id="e-s26Status" data-f="s26Status"${ro}>${opt(S26.map(x => [x.id, x.label || x.id]), r.s26Status || "")}</select></label>
+        <label class="fl"><span>2026 tier</span><input class="f" id="e-s26Tier" data-f="s26Tier" list="tiers-dl" value="${esc(r.s26Tier)}"${ro}></label>
+        <label class="fl"><span>2026 amount ($)</span><input class="f num" id="e-s26Amount" data-f="s26Amount" type="number" min="0" step="500" value="${esc(r.s26Amount ?? "")}"${ro}></label>
+        <label class="fl full"><span>Relationship notes</span><textarea class="f" id="e-s26Warmth" data-f="s26Warmth" rows="2"${ro}>${esc(r.s26Warmth)}</textarea></label>
+        <label class="fl full"><span>2026 notes</span><textarea class="f" id="e-s26Notes" data-f="s26Notes" rows="2"${ro}>${esc(r.s26Notes)}</textarea></label>
+      </div>
+      <datalist id="tiers-dl">${TIERS.filter(Boolean).map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+    </section>
 
     <section class="sec">
       <div class="sec-h"><h3>People to contact</h3><small>${(r.contacts || []).length} saved</small></div>
@@ -838,7 +890,7 @@ function draftEmail(r) {
   const angle = r.angle || "put your team in front of MIT's next generation of product, strategy and AI leaders";
   const speakers = [["cerebras", "Andrew Feldman (Cerebras)"], ["hubspot", "HubSpot co-founder Dharmesh Shah"], ["google", "Carol Walport of Google DeepMind"]]
     .filter(([k]) => !co.toLowerCase().includes(k)).slice(0, 2).map(x => x[1]).join(" and ");
-  const thanks = /2026/.test(r.warm || "") ? ` Thank you again for being part of it.` : "";
+  const thanks = r.s26Status === "Confirmed" ? ` Thank you again for sponsoring it.` : /2026/.test(r.warm || "") ? ` Thank you again for being part of it.` : "";
   return `Subject: ${co} × MIT Sloan Tech Summit 2027
 
 Hi ${first},
@@ -894,7 +946,7 @@ function closeModal() { $("#modal").hidden = true; $("#modal").innerHTML = ""; }
 /* ——— export / import ——— */
 function exportRows() { return [...items.entries()].map(([id, r]) => ({ id, ...r })).sort((a, b) => a.name.localeCompare(b.name)); }
 function toCSV() {
-  const cols = ["name", "sector", "priority", "status", "tier", "owner", "ask", "committed", "nextStep", "nextDate", "lastContact", "vetted", "warm", "contacts", "fit", "mitTies", "programs", "channel", "notes"];
+  const cols = ["name", "sector", "priority", "status", "tier", "owner", "ask", "committed", "nextStep", "nextDate", "lastContact", "vetted", "warm", "s26Status", "s26Tier", "s26Amount", "s26Warmth", "s26Notes", "product", "tags", "leadWarmth", "speaking", "contacts", "fit", "mitTies", "programs", "channel", "notes"];
   const q = v => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const rows = exportRows().map(r => cols.map(k => k === "contacts" ? (r.contacts || []).map(c => `${c.name} (${c.title})${c.email ? " <" + c.email + ">" : ""}`).join("; ") : k === "status" ? (STAGE[r.status]?.label || r.status) : r[k]).map(q).join(","));
   return [cols.join(","), ...rows].join("\n");
@@ -902,14 +954,51 @@ function toCSV() {
 async function offerFile(filename, text, type) {
   if (downloads) {
     try { await downloads.save({ filename, data: text }); return; }
-    catch (e) { if (e && e.code === "declined") return; }
+    catch (e) { if (e && e.code === "declined") return; if (e && e.code === "rate_limited") { toast("A save is already waiting for your answer."); return; } }
   }
   if (mode === "local" && !window.claude) {
     const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = filename;
     document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); return;
   }
+  if (typeof text !== "string") { toast("Downloads aren't available in this view. Open the tracker in a browser to export."); return; }
   try { await navigator.clipboard.writeText(text); toast("Download isn't available here, so the file was copied to your clipboard."); }
   catch { toast("Couldn't save or copy the file in this view."); }
+}
+/* Excel export: every field, one sheet of companies and one of people. */
+const XL_COLS = [
+  ["Company", r => r.name, 26], ["Sector", r => r.sector, 18], ["Priority", r => r.priority, 8], ["2027 stage", r => STAGE[r.status]?.label || r.status, 15],
+  ["Owner", r => r.owner, 14], ["Suggested tier", r => r.tier, 16], ["Ask ($)", r => num(r.ask), 11], ["Committed ($)", r => num(r.committed), 13],
+  ["Next step", r => r.nextStep, 30], ["Next-step date", r => day(r.nextDate), 13], ["Last contact", r => day(r.lastContact), 13], ["SLO vetted", r => r.vetted ? "Yes" : "No", 10],
+  ["Warm signal", r => r.warm, 24], ["2026 status", r => r.s26Status || "Not approached", 16], ["2026 tier", r => r.s26Tier, 11], ["2026 amount ($)", r => num(r.s26Amount), 14],
+  ["2026 relationship notes", r => r.s26Warmth, 40], ["2026 notes", r => r.s26Notes, 40], ["Product", r => r.product, 28], ["Tags", r => r.tags, 32],
+  ["Lead warmth", r => r.leadWarmth, 18], ["Speaking opportunity", r => r.speaking, 20], ["People (count)", r => (r.contacts || []).length, 9],
+  ["People", r => (r.contacts || []).map(c => [c.name, c.title].filter(Boolean).join(", ") + (c.email ? ` <${c.email}>` : "")).join("\n"), 44],
+  ["Why they'd sponsor", r => r.fit, 50], ["MIT ties", r => r.mitTies, 50], ["Programs", r => r.programs, 40], ["Public channel", r => r.channel, 30],
+  ["Notes", r => r.notes, 44], ["Sources", r => (r.sources || []).join("\n"), 44], ["Research incomplete", r => r.unverified ? "Yes" : "", 10],
+  ["Last updated", r => r.updatedAt ? new Date(r.updatedAt) : null, 17],
+];
+const num = v => (v === null || v === undefined || v === "") ? null : Number(v);
+const day = s => { const d = parseDate(s); return d || null; };
+async function exportExcel() {
+  if (!window.XLSX) { toast("The Excel library didn't load. Check your connection, or use Export CSV."); return; }
+  const rows = exportRows();
+  const aoa = [XL_COLS.map(c => c[0]), ...rows.map(r => XL_COLS.map(c => c[1](r)))];
+  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true, dateNF: "yyyy-mm-dd" });
+  ws["!cols"] = XL_COLS.map(c => ({ wch: c[2] }));
+  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: XL_COLS.length - 1 } }) };
+  const money$ = new Set(["Ask ($)", "Committed ($)", "2026 amount ($)"]);
+  XL_COLS.forEach((c, ci) => { if (!money$.has(c[0])) return; for (let ri = 1; ri <= rows.length; ri++) { const cell = ws[XLSX.utils.encode_cell({ r: ri, c: ci })]; if (cell && cell.t === "n") cell.z = "$#,##0"; } });
+  const people = [["Company", "Name", "Title", "Email", "LinkedIn", "Why this person", "Source", "2026 status", "2027 stage", "Owner"]];
+  rows.forEach(r => (r.contacts || []).forEach(c => people.push([r.name, c.name, c.title, c.email, c.linkedin, c.why, c.source, r.s26Status || "Not approached", STAGE[r.status]?.label || r.status, r.owner])));
+  const ws2 = XLSX.utils.aoa_to_sheet(people);
+  ws2["!cols"] = [26, 26, 36, 30, 40, 44, 44, 16, 15, 14].map(w => ({ wch: w }));
+  ws2["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: people.length - 1, c: 9 } }) };
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Companies");
+  XLSX.utils.book_append_sheet(wb, ws2, "Contacts");
+  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array", cellDates: true });
+  const stamp = new Date().toISOString().slice(0, 10);
+  await offerFile(`sts-2027-sponsors-${stamp}.xlsx`, new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 async function importJSON(file) {
   let data;
@@ -952,7 +1041,7 @@ document.addEventListener("click", async e => {
     case "add": return openAddModal();
     case "close": return closeSheet();
     case "close-modal": return closeModal();
-    case "clear": filters = { q: "", sector: "", prio: "", owner: "", stage: "" }; $("#q").value = ""; return render();
+    case "clear": filters = { q: "", sector: "", prio: "", owner: "", stage: "", s26: "__all" }; $("#q").value = ""; return render();
     case "add-contact": editingContact = "new"; return rerenderPeople();
     case "cancel-contact": editingContact = null; return rerenderPeople();
     case "ask-delete": $("#del-confirm").hidden = false; return;
@@ -960,6 +1049,7 @@ document.addEventListener("click", async e => {
     case "delete": return deleteItem(openId);
     case "regen": $("#d-text").value = draftEmail(items.get(openId)); return;
     case "copy-draft": return copyText($("#d-text").value, "Email copied. Paste it into your mail app.");
+    case "xlsx": return exportExcel();
     case "csv": return offerFile("sts-2027-sponsors.csv", toCSV(), "text/csv");
     case "json": return offerFile("sts-2027-sponsors.json", JSON.stringify(exportRows(), null, 2), "application/json");
     case "settings": return openSettings();
@@ -977,6 +1067,7 @@ $("#q").addEventListener("input", e => { filters.q = e.target.value; renderMain(
 $("#f-sector").addEventListener("change", e => { filters.sector = e.target.value; renderMain(); });
 $("#f-prio").addEventListener("change", e => { filters.prio = e.target.value; renderMain(); });
 $("#f-owner").addEventListener("change", e => { filters.owner = e.target.value; renderMain(); });
+$("#f-s26").addEventListener("change", e => { filters.s26 = e.target.value; renderMain(); });
 $("#file-import").addEventListener("change", e => { const f = e.target.files[0]; if (f) importJSON(f); e.target.value = ""; $("#menu-data").hidden = true; });
 document.addEventListener("keydown", e => {
   if (e.key === "Escape") { if (!$("#modal").hidden) closeModal(); else if (openId) closeSheet(); }

@@ -12,6 +12,15 @@ people, stage, owner, ask, next step, and a ready-to-edit outreach email.
 | Edits | Live for everyone the artifact is shared with (Contributor access or higher) | Saved in each person's browser only |
 | Sharing edits | Automatic | Data → Export JSON, then commit it as `sponsors/targets.json` and rebuild |
 
+## 2026 data and Excel export
+
+- Each company has a **2026** status (Confirmed, Received Interest, Outreach Sent, Ghosted, Declined,
+  Not approached) with last year's tier, amount and notes. The list has a 2026 column you can sort and filter.
+- **Data → Export Excel** saves an .xlsx with two sheets: *Companies* (every field) and *Contacts*
+  (one row per person).
+- The team's 2026 tracker (contacts, emails, relationship notes, amounts) lives **only in the shared
+  tracker**. It is deliberately not committed here, because this repository is public.
+
 ## Files
 
 ```
