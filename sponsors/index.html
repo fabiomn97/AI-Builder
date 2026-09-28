@@ -150,7 +150,7 @@ select.f { padding-right: 28px; appearance: none; background-image: linear-gradi
 
 /* ——— list ——— */
 .list { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-.row { display: grid; grid-template-columns: minmax(0, 2.2fr) 40px minmax(0, 1.15fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, .85fr) 52px minmax(0, 1.8fr) 84px; gap: 12px; align-items: center; padding: 11px 16px; border-top: 1px solid var(--line); }
+.row { display: grid; grid-template-columns: minmax(0, 2.2fr) 44px minmax(0, 1.15fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, .85fr) 52px minmax(0, 1.8fr) 84px; gap: 12px; align-items: center; padding: 11px 16px; border-top: 1px solid var(--line); }
 .row.head { border-top: 0; background: var(--sunk); padding-block: 8px; }
 .row.head button { background: none; border: 0; padding: 0; cursor: pointer; font: 500 11px/1.2 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); text-align: left; display: inline-flex; gap: 4px; align-items: center; }
 .row.head button[data-active] { color: var(--ink); }
@@ -217,6 +217,28 @@ select.f { padding-right: 28px; appearance: none; background-image: linear-gradi
 .card[draggable="true"] { cursor: grab; }
 .card .top-l { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
 .card .prio { width: 22px; height: 22px; font-size: 12px; }
+
+/* Inline pickers: priority and tier change straight from the list. A dot marks a value changed from the suggestion. */
+.pick-wrap { position: relative; display: inline-flex; max-width: 100%; min-width: 0; }
+.pick-wrap[data-changed]::after { content: ""; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); pointer-events: none; }
+.pick { appearance: none; -webkit-appearance: none; font: inherit; color: inherit; border: 1px solid transparent; border-radius: 5px; background-color: transparent; cursor: pointer; margin: 0; }
+.pick:hover:not(:disabled) { border-color: var(--ink-3); }
+.pick:disabled { cursor: default; opacity: 1; }
+.pick option { color: var(--ink); background: var(--surface); font: 400 14px var(--f-body); }
+.prio-pick { width: 30px; height: 26px; padding: 0; text-align: center; text-align-last: center; font: 700 13px/1 var(--f-display); }
+.prio-pick.A { background-color: var(--ink); color: var(--bg); }
+.prio-pick.B { background-color: var(--line-2); color: var(--ink); }
+.prio-pick.C { background-color: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-2); }
+.card .prio-pick { width: 26px; height: 22px; font-size: 12px; }
+.tier-pick { width: 100%; max-width: 150px; height: 30px; padding: 0 22px 0 8px; font-size: 13px; color: var(--ink-2); border-color: var(--line); background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 12px) 13px, calc(100% - 8px) 13px; background-size: 4px 4px; background-repeat: no-repeat; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tier-pick.none { color: var(--ink-3); border-style: dashed; }
+.tier-pick:disabled { background-image: none; border-color: transparent; padding-left: 0; }
+.mail { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; flex: none; }
+.mail svg { width: 13px; height: 13px; }
+.mail.ok { color: var(--good); background: var(--good-soft); }
+.mail.no { color: var(--ink-3); background: var(--muted-soft); }
+.c-status { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sugg { font: 500 11px/1.2 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--accent); }
 .card .co-name { font-size: 14px; }
 .card .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--ink-3); }
 
@@ -296,15 +318,15 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
 @media (max-width: 1080px) {
   .summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
   .summary > section:nth-child(2) { grid-column: 1 / -1; grid-row: 2; border-left: 0; border-top: 1px solid var(--line); }
-  .row { grid-template-columns: minmax(0, 2.1fr) 40px minmax(0, 1.2fr) minmax(0, 1.1fr) minmax(0, 1.9fr) 84px; }
-  .row .c-tier, .row .c-contacts, .row .c-owner { display: none; }
+  .row { grid-template-columns: minmax(0, 1.9fr) 44px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) 80px; }
+  .row .c-contacts, .row .c-owner { display: none; }
 }
 @media (max-width: 720px) {
   .summary { grid-template-columns: minmax(0, 1fr); }
   .summary > section + section { border-left: 0; border-top: 1px solid var(--line); }
   .summary > section:nth-child(2) { grid-row: auto; }
   .row.head { display: none; }
-  .row.item { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "p co money" "p st st" "p y y" "p nx nx"; gap: 6px 10px; padding: 12px 14px; }
+  .row.item { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "p co co" "p st st" "p y t" "p nx money"; gap: 6px 10px; padding: 12px 14px; }
   .row .c-prio { grid-area: p; align-self: start; }
   .row .c-co { grid-area: co; }
   .row .c-status { grid-area: st; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -312,6 +334,9 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
   .row .c-next { grid-area: nx; }
   .row .c-money { grid-area: money; align-self: start; }
   .row .c-status .owner-inline { display: inline; }
+  .row .c-tier { grid-area: t; justify-self: end; }
+  .row .c-money { align-self: center; }
+  .tier-pick { max-width: 130px; }
   .row .c-s26 { grid-area: y; }
   .row .c-money .a { display: none; }
   .fact { grid-template-columns: minmax(0, 1fr); gap: 2px; }
@@ -431,6 +456,17 @@ const STAGES = [
   { id: "hold",        label: "On hold",     color: "var(--ink-3)" },
 ];
 const STAGE = Object.fromEntries(STAGES.map(s => [s.id, s]));
+/* "Not started" is split by whether a contact email is on file, so the team can see who is ready to email. */
+const hasEmail = r => (r.contacts || []).some(c => /\S+@\S+\.\S+/.test(c.email || ""));
+const VIEW_STAGES = [
+  { id: "ns_email", status: "not_started", label: "Not started · has email", color: "var(--good)" },
+  { id: "ns_none", status: "not_started", label: "Not started · needs email", color: "var(--line-2)" },
+  ...STAGES.slice(1).map(s => ({ ...s, status: s.id })),
+];
+const VIEW_STAGE = Object.fromEntries(VIEW_STAGES.map(s => [s.id, s]));
+const viewStage = r => r.status === "not_started" ? (hasEmail(r) ? "ns_email" : "ns_none") : r.status;
+const ICON_MAIL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="m2.5 4.5 5.5 4.5 5.5-4.5"/></svg>';
+const PRIO_LABEL = { A: "A · Go first", B: "B · Strong fit", C: "C · Stretch" };
 /* Tier ladder. These are the 2026 tiers (2027 tiers aren't final yet); 2026 called Platinum "Petabyte" and Gold "Terabyte". */
 const TIER_INFO = [
   { id: "Platinum", price: 25000, legacy: "Petabyte" },
@@ -635,17 +671,17 @@ function filtered() {
     (!filters.sector || r.sector === filters.sector) &&
     (!filters.prio || r.priority === filters.prio) &&
     (!filters.owner || (filters.owner === "__none" ? !(r.owner || "").trim() : (r.owner || "").trim() === filters.owner)) &&
-    (!filters.stage || r.status === filters.stage) &&
+    (!filters.stage || viewStage(r) === filters.stage) &&
     (filters.s26 === "__all" || (r.s26Status || "") === filters.s26) &&
     (!q || [r.name, r.sector, r.owner, r.notes, r.fit, r.mitTies, r.warm, r.nextStep, r.product, r.tags, r.s26Status, r.s26Warmth, r.s26Notes, ...(r.contacts || []).map(c => c.name + " " + c.title + " " + (c.email || ""))].join(" ").toLowerCase().includes(q))
   );
   const k = sort.key, d = sort.dir;
-  const stageIdx = s => STAGES.findIndex(x => x.id === s);
+  const stageIdx = r => VIEW_STAGES.findIndex(x => x.id === viewStage(r));
   arr.sort((a, b) => {
     let x, y;
     if (k === "prio") { x = PRIO_ORDER[a.priority] ?? 9; y = PRIO_ORDER[b.priority] ?? 9; if (x === y) { x = a.warm ? 0 : 1; y = b.warm ? 0 : 1; } }
     else if (k === "name") { return d * a.name.localeCompare(b.name); }
-    else if (k === "status") { x = stageIdx(a.status); y = stageIdx(b.status); }
+    else if (k === "status") { x = stageIdx(a); y = stageIdx(b); }
     else if (k === "owner") { return d * ((a.owner || "~").localeCompare(b.owner || "~")); }
     else if (k === "next") { x = a.nextDate || "9999"; y = b.nextDate || "9999"; return d * x.localeCompare(y); }
     else if (k === "s26") { const o = s => { const i = S26.findIndex(x => x.id === (s || "")); return i < 0 ? 9 : i; }; x = o(a.s26Status); y = o(b.s26Status); }
@@ -700,11 +736,11 @@ function renderSummary() {
     (last.length ? `<span>2026: <b class="num">${esc(money(lastSum))}</b> from ${last.length} sponsors</span>` : "") +
     (settings.goal ? "" : (mode !== "readonly" ? ` <button class="linkish" type="button" data-act="settings">Set a goal</button>` : ""));
 
-  const counts = Object.fromEntries(STAGES.map(s => [s.id, 0]));
-  all.forEach(r => { counts[r.status] = (counts[r.status] || 0) + 1; });
+  const counts = Object.fromEntries(VIEW_STAGES.map(s => [s.id, 0]));
+  all.forEach(r => { const k = viewStage(r); counts[k] = (counts[k] || 0) + 1; });
   const total = all.length || 1;
-  $("#funnel").innerHTML = STAGES.filter(s => counts[s.id]).map(s => `<span style="flex:${counts[s.id] / total};background:${s.color}" title="${esc(s.label)}: ${counts[s.id]}"></span>`).join("");
-  $("#stages").innerHTML = STAGES.map(s => `<button type="button" class="stage" data-stage="${s.id}" aria-pressed="${filters.stage === s.id}"><i style="background:${s.color}"></i>${esc(s.label)} <b class="num">${counts[s.id] || 0}</b></button>`).join("");
+  $("#funnel").innerHTML = VIEW_STAGES.filter(s => counts[s.id]).map(s => `<span style="flex:${counts[s.id] / total};background:${s.color}" title="${esc(s.label)}: ${counts[s.id]}"></span>`).join("");
+  $("#stages").innerHTML = VIEW_STAGES.map(s => `<button type="button" class="stage" data-stage="${s.id}" aria-pressed="${filters.stage === s.id}"><i style="background:${s.color}"></i>${esc(s.label)} <b class="num">${counts[s.id] || 0}</b></button>`).join("");
 
   const due = all.map((r, i) => ({ r, id: [...items.keys()][i] }))
     .filter(x => x.r.nextDate && !["committed", "declined"].includes(x.r.status))
@@ -719,6 +755,32 @@ function renderSummary() {
 }
 
 function statusPill(s) { const st = STAGE[s] || STAGE.not_started; return `<span class="pill st-${st.id}"><i></i>${esc(st.label)}</span>`; }
+function mailBadge(r) {
+  if (r.status !== "not_started") return "";
+  return hasEmail(r) ? `<span class="mail ok" title="A contact email is on file">${ICON_MAIL}<span class="sr">Has email</span></span>`
+                     : `<span class="mail no" title="No contact email yet">${ICON_MAIL}<span class="sr">Needs email</span></span>`;
+}
+/* Pickers keep the original suggestion (saved the first time someone changes it) so a change is visible. */
+function changedFrom(r, f) { const k = f === "priority" ? "suggestedPriority" : "suggestedTier"; return r[k] !== undefined && r[k] !== (r[f] || "") ? r[k] : null; }
+function prioPick(r) {
+  const was = changedFrom(r, "priority"), dis = mode === "readonly" ? " disabled" : "";
+  return `<span class="pick-wrap"${was !== null ? ` data-changed title="Suggested: ${esc(was || "none")}"` : ""}><select class="pick prio-pick ${esc(r.priority)}" data-pick="priority" data-id="${esc(r.id)}" aria-label="Priority for ${esc(r.name)}"${dis}>${["A", "B", "C"].map(v => `<option value="${v}"${v === r.priority ? " selected" : ""}>${v}</option>`).join("")}</select></span>`;
+}
+function tierPick(r) {
+  const was = changedFrom(r, "tier"), dis = mode === "readonly" ? " disabled" : "";
+  return `<span class="pick-wrap"${was !== null ? ` data-changed title="Suggested: ${esc(was ? tierLabel(was) : "no tier")}"` : ""}><select class="pick tier-pick${r.tier ? "" : " none"}" data-pick="tier" data-id="${esc(r.id)}" aria-label="Tier for ${esc(r.name)}"${dis}>${[...TIERS, ...(r.tier && !TIERS.includes(r.tier) ? [r.tier] : [])].map(t => `<option value="${esc(t)}"${t === (r.tier || "") ? " selected" : ""}>${esc(t || "Choose tier")}</option>`).join("")}</select></span>`;
+}
+/* One place builds a priority/tier change: it records the suggestion once and keeps a tier-priced ask in step. */
+function pickPatch(r, f, v) {
+  const patch = { [f]: v }, sk = f === "priority" ? "suggestedPriority" : "suggestedTier";
+  if (r[sk] === undefined) patch[sk] = r[f] || "";
+  if (f === "tier") {
+    const old = TIER_BY[r.tier]?.price, empty = r.ask === null || r.ask === undefined || r.ask === "";
+    if (TIER_BY[v] && (empty || r.ask === old)) patch.ask = TIER_BY[v].price;
+    else if (!TIER_BY[v] && old !== undefined && r.ask === old) patch.ask = null;
+  }
+  return patch;
+}
 function s26Chip(r) {
   const s = S26BY[r.s26Status || ""] || { cls: "none", id: r.s26Status };
   const extra = r.s26Status === "Confirmed" && r.s26Amount ? ` <small>$${esc(Math.round(r.s26Amount / 1000))}k</small>` : "";
@@ -748,15 +810,15 @@ function renderMain() {
   if (view === "board") return renderBoard(arr);
   const hd = (key, label) => `<button type="button" data-sort="${key}"${sort.key === key ? " data-active" : ""}>${label}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button>`;
   let html = `<div class="list" role="table" aria-label="Sponsor targets"><div class="row head" role="row">
-    <div>${hd("name", "Company")}</div><div>${hd("prio", "Pri")}</div><div>${hd("status", "Stage")}</div><div class="c-s26">${hd("s26", "2026")}</div><div class="c-tier"><button type="button" disabled>Tier</button></div>
+    <div>${hd("name", "Company")}</div><div title="Pick A, B or C for each company">${hd("prio", "Pri")}</div><div>${hd("status", "Stage")}</div><div class="c-s26">${hd("s26", "2026")}</div><div class="c-tier"><button type="button" data-act="tiers" title="Compare tiers">Tier</button></div>
     <div class="c-owner">${hd("owner", "Owner")}</div><div class="c-contacts"><button type="button" disabled>People</button></div><div>${hd("next", "Next step")}</div><div style="text-align:right">${hd("money", "Ask")}</div></div>`;
   if (!arr.length) html += `<div class="empty"><h3>No matches</h3><p>No company matches these filters.</p><button class="btn" type="button" data-act="clear">Clear filters</button></div>`;
   html += arr.map(r => `<div class="row item${r.id === openId ? " sel" : ""}" role="row" tabindex="0" data-open="${esc(r.id)}">
     <div class="c-co co"><div class="co-name">${esc(r.name)} ${flags(r)}</div><div class="co-sub">${esc(r.sector || "No sector")}${r.warm ? " · " + esc(r.warm) : ""}</div></div>
-    <div class="c-prio"><span class="prio ${esc(r.priority)}" title="Priority ${esc(r.priority)}">${esc(r.priority)}</span></div>
-    <div class="c-status">${statusPill(r.status)}<span class="owner-inline">${esc(r.owner ? "· " + r.owner : "· Unassigned")}</span></div>
+    <div class="c-prio">${prioPick(r)}</div>
+    <div class="c-status">${statusPill(r.status)}${mailBadge(r)}<span class="owner-inline">${esc(r.owner ? "· " + r.owner : "· Unassigned")}</span></div>
     <div class="c-s26">${s26Chip(r)}</div>
-    <div class="c-tier cell-2${r.tier ? "" : " none"}">${esc(tierLabel(r.tier))}</div>
+    <div class="c-tier">${tierPick(r)}</div>
     <div class="c-owner cell-2${r.owner ? "" : " none"}">${esc(r.owner || "Unassigned")}</div>
     <div class="c-contacts contacts-n">${(r.contacts || []).length}</div>
     <div class="c-next">${nextCell(r)}</div>
@@ -767,11 +829,11 @@ function renderMain() {
 
 function renderBoard(arr) {
   const canDrag = mode !== "readonly";
-  $("#main").innerHTML = `<div class="board">${STAGES.map(s => {
-    const col = arr.filter(r => r.status === s.id);
-    return `<div class="col" data-col="${s.id}"><div class="col-h"><span class="pill st-${s.id}"><i></i>${esc(s.label)}</span><span class="n">${col.length}</span></div>
+  $("#main").innerHTML = `<div class="board">${VIEW_STAGES.map(s => {
+    const col = arr.filter(r => viewStage(r) === s.id);
+    return `<div class="col" data-col="${s.status}"><div class="col-h"><span class="pill st-${s.status}"><i></i>${esc(s.label)}</span><span class="n">${col.length}</span></div>
       ${col.map(r => `<div class="card" data-open="${esc(r.id)}" tabindex="0"${canDrag ? ' draggable="true"' : ""} data-id="${esc(r.id)}">
-        <div class="top-l"><div class="co-name">${esc(r.name)}</div><span class="prio ${esc(r.priority)}">${esc(r.priority)}</span></div>
+        <div class="top-l"><div class="co-name">${esc(r.name)}</div>${prioPick(r)}</div>
         <div class="meta"><span>${esc(r.owner || "Unassigned")}</span>${r.tier ? `<span>${esc(r.tier)}</span>` : ""}${r.committed != null || r.ask != null ? `<span class="mono">${esc(money(r.committed ?? r.ask))}</span>` : ""}</div>
         ${r.nextStep || r.nextDate ? nextCell(r) : ""}
       </div>`).join("")}</div>`;
@@ -828,9 +890,9 @@ function renderSheet() {
     ${r.unverified ? `<div class="warnbox"><b>Research incomplete.</b> This company's fit is a starting hypothesis with no verified sources or named people yet. Check it before outreach.</div>` : ""}
     <div class="grid2">
       <label class="fl"><span>Stage</span><select class="f" id="e-status" data-f="status"${ro}>${opt(STAGES.map(s => [s.id, s.label]), r.status)}</select></label>
-      <label class="fl"><span>Priority</span><select class="f" id="e-priority" data-f="priority"${ro}>${opt([["A", "A · Go first"], ["B", "B · Strong fit"], ["C", "C · Stretch"]], r.priority)}</select></label>
+      <label class="fl"><span class="with-link">Priority${changedFrom(r, "priority") !== null ? ` <span class="sugg">Suggested: ${esc(changedFrom(r, "priority") || "none")}</span>` : ""}</span><select class="f" id="e-priority" data-f="priority"${ro}>${opt([["A", "A · Go first"], ["B", "B · Strong fit"], ["C", "C · Stretch"]], r.priority)}</select></label>
       <label class="fl"><span>Owner</span><input class="f" id="e-owner" data-f="owner" list="owners-dl" placeholder="Teammate's name" value="${esc(r.owner)}"${ro}></label>
-      <div class="fl"><span class="with-link"><label for="e-tier">Suggested tier</label><button class="linkish tier-link" type="button" data-act="tiers">Compare tiers</button></span><select class="f" id="e-tier" data-f="tier"${ro}>${opt(TIERS.map(t => [t, tierLabel(t)]), r.tier)}</select></div>
+      <div class="fl"><span class="with-link"><label for="e-tier">Tier${changedFrom(r, "tier") !== null ? ` <span class="sugg">Suggested: ${esc(changedFrom(r, "tier") || "none")}</span>` : ""}</label><button class="linkish tier-link" type="button" data-act="tiers">Compare tiers</button></span><select class="f" id="e-tier" data-f="tier"${ro}>${opt(TIERS.map(t => [t, tierLabel(t)]), r.tier)}</select></div>
       <label class="fl"><span>Ask ($)</span><input class="f num" id="e-ask" data-f="ask" type="number" min="0" step="500" inputmode="numeric" value="${esc(r.ask ?? "")}"${ro}></label>
       <label class="fl"><span>Committed ($)</span><input class="f num" id="e-committed" data-f="committed" type="number" min="0" step="500" inputmode="numeric" value="${esc(r.committed ?? "")}"${ro}></label>
       <label class="fl full"><span>Next step</span><input class="f" id="e-nextStep" data-f="nextStep" placeholder="e.g. Send deck to recruiting lead" value="${esc(r.nextStep)}"${ro}></label>
@@ -1060,8 +1122,8 @@ async function offerFile(filename, text, type) {
 }
 /* Excel export: every field, one sheet of companies and one of people. */
 const XL_COLS = [
-  ["Company", r => r.name, 26], ["Sector", r => r.sector, 18], ["Priority", r => r.priority, 8], ["2027 stage", r => STAGE[r.status]?.label || r.status, 15],
-  ["Owner", r => r.owner, 14], ["Suggested tier", r => r.tier, 16], ["Ask ($)", r => num(r.ask), 11], ["Committed ($)", r => num(r.committed), 13],
+  ["Company", r => r.name, 26], ["Sector", r => r.sector, 18], ["Priority", r => r.priority, 8], ["Suggested priority", r => r.suggestedPriority ?? r.priority, 10], ["2027 stage", r => STAGE[r.status]?.label || r.status, 15], ["Contact email on file", r => hasEmail(r) ? "Yes" : "No", 12],
+  ["Owner", r => r.owner, 14], ["Tier", r => r.tier, 16], ["Suggested tier", r => r.suggestedTier ?? r.tier, 16], ["Ask ($)", r => num(r.ask), 11], ["Committed ($)", r => num(r.committed), 13],
   ["Next step", r => r.nextStep, 30], ["Next-step date", r => day(r.nextDate), 13], ["Last contact", r => day(r.lastContact), 13], ["SLO vetted", r => r.vetted ? "Yes" : "No", 10],
   ["Warm signal", r => r.warm, 24], ["2026 status", r => r.s26Status || "Not approached", 16], ["2026 tier", r => r.s26Tier, 11], ["2026 amount ($)", r => num(r.s26Amount), 14],
   ["2026 relationship notes", r => r.s26Warmth, 40], ["2026 notes", r => r.s26Notes, 40], ["Product", r => r.product, 28], ["Tags", r => r.tags, 32],
@@ -1123,7 +1185,7 @@ document.addEventListener("click", async e => {
   const menu = $("#menu-data");
   if (!e.target.closest(".menu")) { menu.hidden = true; $("#btn-data").setAttribute("aria-expanded", "false"); }
   if (!t) return;
-  if (t.dataset.open && !e.target.closest("a")) return openSheet(t.dataset.open);
+  if (t.dataset.open && !e.target.closest("a, .pick-wrap")) return openSheet(t.dataset.open);
   if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: -sort.dir } : { key: t.dataset.sort, dir: 1 }; savePrefs(); return renderMain(); }
   if (t.dataset.stage) { filters.stage = filters.stage === t.dataset.stage ? "" : t.dataset.stage; renderSummary(); return renderMain(); }
   if (t.dataset.editContact != null) { editingContact = Number(t.dataset.editContact); return rerenderPeople(); }
@@ -1158,6 +1220,15 @@ document.addEventListener("click", async e => {
   }
 });
 $("#btn-add").addEventListener("click", openAddModal);
+$("#main").addEventListener("change", e => {
+  const el = e.target.closest("[data-pick]"); if (!el || mode === "readonly") return;
+  const id = el.dataset.id, r = items.get(id); if (!r) return;
+  const f = el.dataset.pick, v = el.value;
+  if ((r[f] || "") === v) return;
+  patchItem(id, pickPatch(r, f, v), { immediate: true });
+  toast(`${r.name}: ${f === "priority" ? "priority " + v : v ? tierLabel(v) : "no tier"}`);
+});
+$("#main").addEventListener("keydown", e => { if (e.target.matches("[data-pick]")) e.stopPropagation(); });
 $("#btn-data").addEventListener("click", e => { e.stopPropagation(); const m = $("#menu-data"); m.hidden = !m.hidden; e.currentTarget.setAttribute("aria-expanded", String(!m.hidden)); });
 $("#scrim").addEventListener("click", closeSheet);
 $("#v-list").addEventListener("click", () => { view = "list"; savePrefs(); renderMain(); });
@@ -1185,9 +1256,9 @@ $("#sheet").addEventListener("input", e => {
   if (el.dataset.f && openId) {
     const f = el.dataset.f, v = fieldValue(el);
     if (f === "name" && !String(v).trim()) return;
-    const extra = {};
-    if (f === "tier" && TIER_BY[v] && (items.get(openId).ask == null || items.get(openId).ask === "")) { extra.ask = TIER_BY[v].price; const a = $("#e-ask"); if (a) a.value = extra.ask; }
-    patchItem(openId, { [f]: v, ...extra }, { immediate: el.tagName === "SELECT" || el.type === "checkbox" || el.type === "date" });
+    const patch = f === "priority" || f === "tier" ? pickPatch({ id: openId, ...items.get(openId) }, f, v) : { [f]: v };
+    if ("ask" in patch && f === "tier") { const a = $("#e-ask"); if (a) a.value = patch.ask ?? ""; }
+    patchItem(openId, patch, { immediate: el.tagName === "SELECT" || el.type === "checkbox" || el.type === "date" });
     if (["status", "priority", "vetted"].includes(f)) renderSummary();
   }
   if (el.id === "d-me") { prefs.me = el.value; savePrefs(); delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); }
