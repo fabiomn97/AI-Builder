@@ -477,47 +477,8 @@
   "updatedAt": ""
  },
  {
-  "id": "brex",
-  "name": "Brex",
-  "sector": "Fintech & Finance",
-  "priority": "C",
-  "tier": "Entry",
-  "angle": "reach MIT founders alongside Capital One's presence in Kendall Square",
-  "warm": "",
-  "status": "not_started",
-  "fit": "Now part of Capital One (acquisition closed Apr 7, 2026) - pitch jointly with Capital One's Cambridge/Kendall presence; corporate-card/AI finance story for founders in the audience.",
-  "mitTies": "Paul Bousquet, who oversees Corporate Treasury at Brex, is an MIT Sloan graduate (per CFO Leadership Council Spring 2025 speaker bio). Parent Capital One has a Kendall/MIT office.",
-  "programs": "Brex is inside Capital One; use Capital One MBA programs (https://www.capitalonecareers.com/graduate-programs).",
-  "channel": "",
-  "contacts": [
-   {
-    "name": "Paul Bousquet",
-    "title": "Corporate Treasury lead, Brex (as of 2025, verify post-acquisition)",
-    "why": "MIT Sloan alumnus; warm alumni intro into Brex/Capital One finance org",
-    "source": "https://cfoleadershipcouncil.com/spring2025/speakers/",
-    "email": "",
-    "linkedin": ""
-   }
-  ],
-  "sources": [
-   "https://www.capitalone.com/about/newsroom/capital-one-completes-acquisition-of-brex/",
-   "https://investor.capitalone.com/news-releases/news-release-details/capital-one-acquire-brex",
-   "https://cfoleadershipcouncil.com/spring2025/speakers/"
-  ],
-  "unverified": false,
-  "owner": "",
-  "nextStep": "",
-  "nextDate": "",
-  "lastContact": "",
-  "notes": "",
-  "ask": 2000,
-  "committed": null,
-  "vetted": false,
-  "updatedAt": ""
- },
- {
   "id": "capital-one",
-  "name": "Capital One",
+  "name": "Capital One (incl. Brex)",
   "sector": "Fintech & Finance",
   "priority": "A",
   "tier": "Gold",
@@ -525,7 +486,7 @@
   "warm": "MIT FinTech Conf. sponsor",
   "status": "not_started",
   "fit": "Tech-forward bank with a large office steps from Kendall/MIT, dedicated MBA Business Analyst/Product programs, and a strong AI brand; just acquired Brex (2026).",
-  "mitTies": "78,000 sq ft Boston-area office next to the Kendall/MIT T stop with views of MIT; Chief Scientist Prem Natarajan featured on MIT Sloan Management Review's 'Me, Myself, and AI' podcast.",
+  "mitTies": "78,000 sq ft Boston-area office next to the Kendall/MIT T stop with views of MIT; Chief Scientist Prem Natarajan featured on MIT Sloan Management Review's 'Me, Myself, and AI' podcast. Brex (now part of Capital One): Paul Bousquet, who oversees Corporate Treasury at Brex, is an MIT Sloan graduate (per CFO Leadership Council Spring 2025 speaker bio).",
   "programs": "MBA full-time and MBA Internship programs: https://www.capitalonecareers.com/graduate-programs ; campus MBA jobs: https://campus.capitalone.com/category/mba-jobs/1786/71331/1 ; academic partnerships: https://capitalone.science/academia/",
   "channel": "Academic partnerships page: https://capitalone.science/academia/",
   "contacts": [
@@ -536,6 +497,14 @@
     "source": "https://sloanreview.mit.edu/audio/making-magic-with-gen-ai-capital-ones-prem-natarajan/",
     "email": "",
     "linkedin": ""
+   },
+   {
+    "name": "Paul Bousquet",
+    "title": "Corporate Treasury lead, Brex (as of 2025, verify post-acquisition)",
+    "why": "Brex (acquired by Capital One, Apr 2026): MIT Sloan alumnus; warm alumni intro into Brex/Capital One finance org",
+    "source": "https://cfoleadershipcouncil.com/spring2025/speakers/",
+    "email": "",
+    "linkedin": ""
    }
   ],
   "sources": [
@@ -544,7 +513,9 @@
    "https://www.capitalonecareers.com/graduate-programs",
    "https://sloanreview.mit.edu/audio/making-magic-with-gen-ai-capital-ones-prem-natarajan/",
    "https://capitalone.science/academia/",
-   "https://www.capitalone.com/about/newsroom/capital-one-completes-acquisition-of-brex/"
+   "https://www.capitalone.com/about/newsroom/capital-one-completes-acquisition-of-brex/",
+   "https://investor.capitalone.com/news-releases/news-release-details/capital-one-acquire-brex",
+   "https://cfoleadershipcouncil.com/spring2025/speakers/"
   ],
   "unverified": false,
   "owner": "",
