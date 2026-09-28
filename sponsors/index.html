@@ -348,7 +348,7 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
           <button type="button" data-act="xlsx">Export Excel<small>Companies and contacts, every field, one sheet each</small></button>
           <button type="button" data-act="csv">Export CSV<small>One row per company</small></button>
           <button type="button" data-act="json">Export JSON<small>Full backup, including contacts</small></button>
-          <label for="file-import">Import JSON<small>Merges by company; newer edits win</small></label>
+          <label for="file-import" id="act-import">Import JSON<small>Merges by company; newer edits win</small></label>
           <hr>
           <button type="button" data-act="tiers">Sponsorship tiers<small>What each tier includes</small></button>
           <button type="button" data-act="settings">Settings<small>Goal, your name for email drafts</small></button>
@@ -465,7 +465,7 @@ const LS_DATA = "sts27.targets.v1", LS_SETTINGS = "sts27.settings.v1", LS_PREFS 
 
 /* ——— state ——— */
 let mode = "loading";           // "shared" | "local" | "readonly"
-let db = null, user = null, downloads = null, myId = null;
+let db = null, user = null, downloads = null, myId = null, canWrite = null;
 let items = new Map();          // id -> record
 let settings = { goal: 0 };
 let prefs = loadJSON(LS_PREFS, {}) || {};
@@ -475,12 +475,13 @@ let sort = prefs.sort || { key: "prio", dir: 1 };
 let openId = null;
 let editingContact = null;      // index or "new"
 let names = {};                 // user id -> display name (shared mode)
-const pending = new Map();      // id -> {timer, patch}
+const pending = new Map();      // id -> {timer, patch, inflight}
+const drafts = {};              // id -> outreach draft the viewer edited by hand (this page load only)
 
 /* ——— helpers ——— */
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const money = n => (n || n === 0) && n !== "" ? "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 }) : "";
+const money = n => n === null || n === undefined || n === "" || isNaN(Number(n)) ? "" : "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
 const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").slice(0, 60) || ("co-" + Date.now());
 const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
 const parseDate = s => { if (!s) return null; const [y,m,d] = s.split("-").map(Number); return y ? new Date(y, m-1, d) : null; };
@@ -501,6 +502,8 @@ function normalize(r) {
     updatedAt: "", updatedBy: "", ...r,
   };
 }
+/* Only web links from shared data become hrefs; anything else (javascript:, data:) is dropped. */
+const safeUrl = u => /^https?:\/\/[^\s"'<>]+$/i.test(String(u || "").trim()) ? String(u).trim() : "";
 const ICON_EXT = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 2H2v8h8V7M7 2h3v3M10 2 5.5 6.5"/></svg>';
 
 /* ——— storage: one interface, two backends ——— */
@@ -515,11 +518,13 @@ async function boot() {
       window.claude.use("downloads").catch(() => null),
     ]);
     myId = user ? await user.id() : null;
-    let canWrite = user ? await user.can("data.write") : null;
+    canWrite = user ? await user.can("data.write") : null;
     setMode(canWrite === false ? "readonly" : "shared");
     db.collection("targets").onSnapshot(snap => {
       const next = new Map();
       snap.docs.forEach(d => next.set(d.id, normalize(d.data())));
+      /* Keep this viewer's unsaved and in-flight edits on top of what the store sent. */
+      for (const [id, p] of pending) { const cur = next.get(id); if (cur) next.set(id, { ...cur, ...p.inflight, ...p.patch }); }
       items = next; render(); resolveNames();
     }, err => { console.warn(err); toast("Live updates stopped. Reload the page to reconnect."); });
     db.doc("meta/settings").onSnapshot(s => { settings = { goal: 0, ...(s.exists ? s.data() : {}) }; renderSummary(); }, () => {});
@@ -547,6 +552,7 @@ function setMode(m) {
   el.title = m === "local" ? "Edits stay in this browser. Use Data → Export JSON to share them, or commit the file as sponsors/targets.json." : "Everyone with access sees edits live.";
   $("#act-reset").hidden = m !== "local";
   $("#btn-add").hidden = m === "readonly";
+  $("#act-import").hidden = m === "readonly";
 }
 function persistLocal() {
   const ok = saveJSON(LS_DATA, [...items.entries()].map(([id, r]) => ({ id, ...r })));
@@ -573,10 +579,17 @@ async function flushItem(id) {
   const patch = p.patch; p.patch = {};
   if (!Object.keys(patch).length) return;
   if (mode === "local") { persistLocal(); pending.delete(id); return; }
-  p.busy = true;
-  try { await db.doc("targets/" + id).update(await stampPatch(patch)); }
-  catch (e) { handleWriteError(e); }
-  finally { p.busy = false; if (Object.keys(p.patch).length) flushItem(id); else pending.delete(id); }
+  p.busy = true; p.inflight = patch;
+  try { await db.doc("targets/" + id).update(await stampPatch(patch)); p.retries = 0; }
+  catch (e) {
+    const code = e && e.code;
+    /* A transient failure keeps the edit queued and retries a couple of times; anything else is reported and dropped. */
+    if ((code === "unavailable" || code === "resource_exhausted") && (p.retries || 0) < 2) {
+      p.retries = (p.retries || 0) + 1; p.patch = { ...patch, ...p.patch };
+      setTimeout(() => flushItem(id), 1500 + Math.random() * 1500);
+    } else handleWriteError(e);
+  }
+  finally { p.busy = false; p.inflight = null; if (Object.keys(p.patch).length) { if (!p.retries) flushItem(id); } else pending.delete(id); }
 }
 async function createItem(rec) {
   const id = uniqueId(slug(rec.name));
@@ -595,7 +608,8 @@ async function deleteItem(id) {
 function uniqueId(base) { let id = base, n = 2; while (items.has(id)) id = base + "-" + n++; return id; }
 function handleWriteError(e) {
   const code = e && e.code;
-  if (code === "invalid_argument") { setMode("readonly"); toast("You can view this tracker but not edit it. Ask the owner for Contributor access."); render(); }
+  if (code === "invalid_argument" && canWrite !== true) { setMode("readonly"); toast("You can view this tracker but not edit it. Ask the owner for Contributor access."); render(); }
+  else if (code === "invalid_argument") toast("That change couldn't be saved. Try a shorter value, then reload if it keeps happening.");
   else if (code === "quota_exceeded") toast("The shared tracker is full. Remove companies you no longer need.");
   else toast("Couldn't save that change. Check your connection and try again.");
 }
@@ -620,7 +634,7 @@ function filtered() {
   arr = arr.filter(r =>
     (!filters.sector || r.sector === filters.sector) &&
     (!filters.prio || r.priority === filters.prio) &&
-    (!filters.owner || (filters.owner === "__none" ? !r.owner : r.owner === filters.owner)) &&
+    (!filters.owner || (filters.owner === "__none" ? !(r.owner || "").trim() : (r.owner || "").trim() === filters.owner)) &&
     (!filters.stage || r.status === filters.stage) &&
     (filters.s26 === "__all" || (r.s26Status || "") === filters.s26) &&
     (!q || [r.name, r.sector, r.owner, r.notes, r.fit, r.mitTies, r.warm, r.nextStep, r.product, r.tags, r.s26Status, r.s26Warmth, r.s26Notes, ...(r.contacts || []).map(c => c.name + " " + c.title + " " + (c.email || ""))].join(" ").toLowerCase().includes(q))
@@ -635,7 +649,7 @@ function filtered() {
     else if (k === "owner") { return d * ((a.owner || "~").localeCompare(b.owner || "~")); }
     else if (k === "next") { x = a.nextDate || "9999"; y = b.nextDate || "9999"; return d * x.localeCompare(y); }
     else if (k === "s26") { const o = s => { const i = S26.findIndex(x => x.id === (s || "")); return i < 0 ? 9 : i; }; x = o(a.s26Status); y = o(b.s26Status); }
-    else if (k === "money") { x = -(a.committed || a.ask || 0); y = -(b.committed || b.ask || 0); }
+    else if (k === "money") { x = -(a.committed ?? a.ask ?? 0); y = -(b.committed ?? b.ask ?? 0); }
     if (x !== y) return d * (x < y ? -1 : 1);
     return a.name.localeCompare(b.name);
   });
@@ -645,7 +659,18 @@ function filtered() {
 /* ——— render ——— */
 let mainT;
 function renderMainSoon() { clearTimeout(mainT); mainT = setTimeout(renderMain, 60); }
-function render() { renderFilters(); renderSummary(); renderMain(); if (openId) { if (items.has(openId)) renderSheet(); else closeSheet(); } }
+function render() {
+  renderFilters(); renderSummary(); renderMain();
+  if (!openId) return;
+  if (!items.has(openId)) return closeSheet();
+  if (sheetBusy()) { sheetStale = true; renderStamp(); } else renderSheet();
+}
+/* Don't rebuild the side sheet under someone who is typing in it or filling in a person. */
+let sheetStale = false;
+function sheetBusy() {
+  const a = document.activeElement;
+  return editingContact !== null || !!(a && a.closest && a.closest("#sheet") && a.matches("input, textarea, select"));
+}
 
 function renderFilters() {
   const sec = $("#f-sector"), cur = filters.sector;
@@ -653,8 +678,8 @@ function renderFilters() {
   const list = [...SECTORS.filter(s => present.has(s)), ...[...present].filter(s => !SECTORS.includes(s)).sort()];
   sec.innerHTML = '<option value="">Sector</option>' + list.map(s => `<option${s === cur ? " selected" : ""}>${esc(s)}</option>`).join("");
   const own = $("#f-owner"), co = filters.owner;
-  const owners = [...new Set([...items.values()].map(r => r.owner).filter(Boolean))].sort();
-  own.innerHTML = '<option value="">Owner</option><option value="__none"' + (co === "__none" ? " selected" : "") + '>Unassigned</option>' + owners.map(o => `<option${o === co ? " selected" : ""}>${esc(o)}</option>`).join("");
+  const owners = [...new Set([...items.values()].map(r => (r.owner || "").trim()).filter(Boolean))].sort();
+  own.innerHTML = '<option value="">Owner</option><option value="__none"' + (co === "__none" ? " selected" : "") + '>Unassigned</option>' + owners.map(o => `<option value="${esc(o)}"${o === co ? " selected" : ""}>${esc(o)}</option>`).join("");
   const y = $("#f-s26"), cy = filters.s26;
   y.innerHTML = `<option value="__all"${cy === "__all" ? " selected" : ""}>2026 status</option>` + S26.map(x => `<option value="${esc(x.id)}"${x.id === cy ? " selected" : ""}>${esc(x.label || x.id)}</option>`).join("");
   let dl = document.getElementById("owners-dl");
@@ -664,7 +689,7 @@ function renderFilters() {
 
 function renderSummary() {
   const all = [...items.values()];
-  const committed = all.reduce((s, r) => s + (r.status === "committed" ? Number(r.committed || r.ask || 0) : 0), 0);
+  const committed = all.reduce((s, r) => s + (r.status === "committed" ? Number(r.committed ?? r.ask ?? 0) : 0), 0);
   const open = all.filter(r => ["contacted", "talking", "proposal"].includes(r.status));
   const openAsk = open.reduce((s, r) => s + Number(r.ask || 0), 0);
   const nCommitted = all.filter(r => r.status === "committed").length;
@@ -735,7 +760,7 @@ function renderMain() {
     <div class="c-owner cell-2${r.owner ? "" : " none"}">${esc(r.owner || "Unassigned")}</div>
     <div class="c-contacts contacts-n">${(r.contacts || []).length}</div>
     <div class="c-next">${nextCell(r)}</div>
-    <div class="c-money money">${r.committed ? `<div class="c">${esc(money(r.committed))}</div>` : r.ask ? `<div>${esc(money(r.ask))}</div>` : `<div class="a">—</div>`}</div>
+    <div class="c-money money">${r.committed != null ? `<div class="c">${esc(money(r.committed))}</div>` : r.ask != null ? `<div>${esc(money(r.ask))}</div>` : `<div class="a">—</div>`}</div>
   </div>`).join("");
   main.innerHTML = html + "</div>";
 }
@@ -747,7 +772,7 @@ function renderBoard(arr) {
     return `<div class="col" data-col="${s.id}"><div class="col-h"><span class="pill st-${s.id}"><i></i>${esc(s.label)}</span><span class="n">${col.length}</span></div>
       ${col.map(r => `<div class="card" data-open="${esc(r.id)}" tabindex="0"${canDrag ? ' draggable="true"' : ""} data-id="${esc(r.id)}">
         <div class="top-l"><div class="co-name">${esc(r.name)}</div><span class="prio ${esc(r.priority)}">${esc(r.priority)}</span></div>
-        <div class="meta"><span>${esc(r.owner || "Unassigned")}</span>${r.tier ? `<span>${esc(r.tier)}</span>` : ""}${r.ask || r.committed ? `<span class="mono">${esc(money(r.committed || r.ask))}</span>` : ""}</div>
+        <div class="meta"><span>${esc(r.owner || "Unassigned")}</span>${r.tier ? `<span>${esc(r.tier)}</span>` : ""}${r.committed != null || r.ask != null ? `<span class="mono">${esc(money(r.committed ?? r.ask))}</span>` : ""}</div>
         ${r.nextStep || r.nextDate ? nextCell(r) : ""}
       </div>`).join("")}</div>`;
   }).join("")}</div>`;
@@ -805,7 +830,7 @@ function renderSheet() {
       <label class="fl"><span>Stage</span><select class="f" id="e-status" data-f="status"${ro}>${opt(STAGES.map(s => [s.id, s.label]), r.status)}</select></label>
       <label class="fl"><span>Priority</span><select class="f" id="e-priority" data-f="priority"${ro}>${opt([["A", "A · Go first"], ["B", "B · Strong fit"], ["C", "C · Stretch"]], r.priority)}</select></label>
       <label class="fl"><span>Owner</span><input class="f" id="e-owner" data-f="owner" list="owners-dl" placeholder="Teammate's name" value="${esc(r.owner)}"${ro}></label>
-      <label class="fl"><span class="with-link">Suggested tier <button class="linkish tier-link" type="button" data-act="tiers">Compare tiers</button></span><select class="f" id="e-tier" data-f="tier"${ro}>${opt(TIERS.map(t => [t, tierLabel(t)]), r.tier)}</select></label>
+      <div class="fl"><span class="with-link"><label for="e-tier">Suggested tier</label><button class="linkish tier-link" type="button" data-act="tiers">Compare tiers</button></span><select class="f" id="e-tier" data-f="tier"${ro}>${opt(TIERS.map(t => [t, tierLabel(t)]), r.tier)}</select></div>
       <label class="fl"><span>Ask ($)</span><input class="f num" id="e-ask" data-f="ask" type="number" min="0" step="500" inputmode="numeric" value="${esc(r.ask ?? "")}"${ro}></label>
       <label class="fl"><span>Committed ($)</span><input class="f num" id="e-committed" data-f="committed" type="number" min="0" step="500" inputmode="numeric" value="${esc(r.committed ?? "")}"${ro}></label>
       <label class="fl full"><span>Next step</span><input class="f" id="e-nextStep" data-f="nextStep" placeholder="e.g. Send deck to recruiting lead" value="${esc(r.nextStep)}"${ro}></label>
@@ -844,17 +869,17 @@ function renderSheet() {
         ${r.fit ? `<div class="fact"><span>Fit</span><div>${esc(r.fit)}</div></div>` : ""}
         ${r.mitTies ? `<div class="fact"><span>MIT ties</span><div>${esc(r.mitTies)}</div></div>` : ""}
         ${r.programs ? `<div class="fact"><span>Programs</span><div>${linkify(r.programs)}</div></div>` : ""}
-        ${r.sources?.length ? `<div class="fact"><span>Sources</span><div><ol class="srcs">${r.sources.map(u => `<li><a href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 80))}</a></li>`).join("")}</ol></div></div>` : ""}
+        ${r.sources?.length ? `<div class="fact"><span>Sources</span><div><ol class="srcs">${r.sources.map(u => `<li>${safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 80))}</a>` : esc(u)}</li>`).join("")}</ol></div></div>` : ""}
       </div>
     </section>
 
     <section class="sec">
       <div class="sec-h"><h3>Outreach draft</h3><small>Edit before sending</small></div>
       <div class="grid2">
-        <label class="fl"><span>To</span><select class="f" id="d-to">${opt([["", "Choose a contact"], ...(r.contacts || []).map((c, i) => [String(i), c.name])], prefs.draftTo?.[openId] ?? ((r.contacts || []).length ? "0" : ""))}</select></label>
+        <label class="fl"><span>To</span><select class="f" id="d-to">${opt([["", "Choose a contact"], ...(r.contacts || []).map(c => [c.name, c.name])], draftContact(r)?.name || "")}</select></label>
         <label class="fl"><span>Your name</span><input class="f" id="d-me" placeholder="Signs the email" value="${esc(prefs.me || "")}"></label>
       </div>
-      <label class="fl"><span class="sr">Draft</span><textarea class="f draft" id="d-text" spellcheck="true">${esc(draftEmail(r))}</textarea></label>
+      <label class="fl"><span class="sr">Draft</span><textarea class="f draft" id="d-text" spellcheck="true">${esc(drafts[openId] ?? draftEmail(r))}</textarea></label>
       <div class="row-btns"><button class="btn sm" type="button" data-act="regen">Rebuild draft</button><button class="btn sm primary" type="button" data-act="copy-draft">Copy email</button></div>
     </section>
 
@@ -881,8 +906,9 @@ function renderStamp() {
   el.textContent = "Last updated " + when + who;
 }
 function linkify(t) {
-  return esc(t).replace(/(https?:\/\/[^\s;,)]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\/(www\.)?/, "")}</a>`)
-               .replace(/\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,})\b/g, '<span class="mono" style="user-select:all">$1</span>');
+  /* One pass, so an address inside a URL isn't wrapped a second time. Input is escaped first. */
+  return esc(t).replace(/(https?:\/\/[^\s;,)<]+)|\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,})\b/gi, (m, u, e) =>
+    u ? `<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\/(www\.)?/, "")}</a>` : `<span class="mono" style="user-select:all">${e}</span>`);
 }
 function renderPeople(r, ro) {
   const cs = r.contacts || [];
@@ -893,8 +919,8 @@ function renderPeople(r, ro) {
       ${c.why ? `<div class="why">${esc(c.why)}</div>` : ""}
       ${c.email ? `<div class="em">${esc(c.email)}</div>` : ""}
       <div class="links">
-        ${c.linkedin ? `<a href="${esc(c.linkedin)}" target="_blank" rel="noopener">LinkedIn</a>` : `<a href="${esc(linkedinSearch(r.name.replace(/\s*\(.*?\)\s*/g, " "), c.name))}" target="_blank" rel="noopener">Find on LinkedIn</a>`}
-        ${c.source ? `<a href="${esc(c.source)}" target="_blank" rel="noopener">Source</a>` : ""}
+        ${safeUrl(c.linkedin) ? `<a href="${esc(safeUrl(c.linkedin))}" target="_blank" rel="noopener">LinkedIn</a>` : `<a href="${esc(linkedinSearch(r.name.replace(/\s*\(.*?\)\s*/g, " "), c.name))}" target="_blank" rel="noopener">Find on LinkedIn</a>`}
+        ${safeUrl(c.source) ? `<a href="${esc(safeUrl(c.source))}" target="_blank" rel="noopener">Source</a>` : ""}
         ${c.email ? `<button class="linkish" type="button" data-copy="${esc(c.email)}">Copy email</button>` : ""}
       </div>
     </div>`).join("");
@@ -923,9 +949,14 @@ function contactForm(c, i) {
 }
 
 /* ——— outreach draft ——— */
+/* The chosen recipient is remembered by name, so removing another person doesn't switch it. */
+function draftContact(r) {
+  const cs = r.contacts || [], want = prefs.draftTo?.[openId];
+  if (want === "") return null;
+  return cs.find(c => c.name === want) || cs[0] || null;
+}
 function draftEmail(r) {
-  const idx = prefs.draftTo?.[openId] ?? ((r.contacts || []).length ? "0" : "");
-  const c = idx !== "" ? (r.contacts || [])[Number(idx)] : null;
+  const c = draftContact(r);
   const first = c && c.name ? c.name.split(/\s+/)[0] : "there";
   const me = prefs.me || "[Your name]";
   const co = r.name.replace(/\s*\(.*?\)\s*/g, " ").trim();
@@ -1009,9 +1040,10 @@ function closeModal() { $("#modal").hidden = true; $("#modal").innerHTML = ""; }
 function exportRows() { return [...items.entries()].map(([id, r]) => ({ id, ...r })).sort((a, b) => a.name.localeCompare(b.name)); }
 function toCSV() {
   const cols = ["name", "sector", "priority", "status", "tier", "owner", "ask", "committed", "nextStep", "nextDate", "lastContact", "vetted", "warm", "s26Status", "s26Tier", "s26Amount", "s26Warmth", "s26Notes", "product", "tags", "leadWarmth", "speaking", "contacts", "fit", "mitTies", "programs", "channel", "notes"];
-  const q = v => { const s = v == null ? "" : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  /* Cells that start like a formula are prefixed so spreadsheets show them as text. */
+  const q = v => { let s = v == null ? "" : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const rows = exportRows().map(r => cols.map(k => k === "contacts" ? (r.contacts || []).map(c => `${c.name} (${c.title})${c.email ? " <" + c.email + ">" : ""}`).join("; ") : k === "status" ? (STAGE[r.status]?.label || r.status) : r[k]).map(q).join(","));
-  return [cols.join(","), ...rows].join("\n");
+  return "\uFEFF" + [cols.join(","), ...rows].join("\r\n");
 }
 async function offerFile(filename, text, type) {
   if (downloads) {
@@ -1037,7 +1069,7 @@ const XL_COLS = [
   ["People", r => (r.contacts || []).map(c => [c.name, c.title].filter(Boolean).join(", ") + (c.email ? ` <${c.email}>` : "")).join("\n"), 44],
   ["Why they'd sponsor", r => r.fit, 50], ["MIT ties", r => r.mitTies, 50], ["Programs", r => r.programs, 40], ["Public channel", r => r.channel, 30],
   ["Notes", r => r.notes, 44], ["Sources", r => (r.sources || []).join("\n"), 44], ["Research incomplete", r => r.unverified ? "Yes" : "", 10],
-  ["Last updated", r => r.updatedAt ? new Date(r.updatedAt) : null, 17],
+  ["Last updated", r => r.updatedAt ? new Date(r.updatedAt).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "", 22],
 ];
 const num = v => (v === null || v === undefined || v === "") ? null : Number(v);
 const day = s => { const d = parseDate(s); return d || null; };
@@ -1066,6 +1098,7 @@ async function exportExcel() {
   await offerFile(`sts-2027-sponsors-${stamp}.xlsx`, new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 async function importJSON(file) {
+  if (mode === "readonly") { toast("You can view this tracker but not edit it, so importing is off."); return; }
   let data;
   try { data = JSON.parse(await file.text()); } catch { toast("That file isn't valid JSON. Export one from this tracker and try again."); return; }
   if (!Array.isArray(data)) data = data.targets || [];
@@ -1075,7 +1108,7 @@ async function importJSON(file) {
     const id = raw.id || slug(raw.name);
     const { id: _, ...rec } = raw;
     const cur = items.get(id);
-    if (cur && cur.updatedAt && rec.updatedAt && cur.updatedAt >= rec.updatedAt) continue;
+    if (cur && cur.updatedAt && (!rec.updatedAt || cur.updatedAt >= rec.updatedAt)) continue;
     const full = normalize({ ...(cur || {}), ...rec });
     items.set(id, full); cur ? updated++ : added++;
     if (mode === "shared") { try { await db.doc("targets/" + id).set(full); } catch (e) { handleWriteError(e); break; } }
@@ -1112,7 +1145,7 @@ document.addEventListener("click", async e => {
     case "ask-delete": $("#del-confirm").hidden = false; return;
     case "cancel-delete": $("#del-confirm").hidden = true; return;
     case "delete": return deleteItem(openId);
-    case "regen": $("#d-text").value = draftEmail(items.get(openId)); return;
+    case "regen": delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); return;
     case "copy-draft": return copyText($("#d-text").value, "Email copied. Paste it into your mail app.");
     case "xlsx": return exportExcel();
     case "csv": return offerFile("sts-2027-sponsors.csv", toCSV(), "text/csv");
@@ -1143,7 +1176,8 @@ document.addEventListener("keydown", e => {
 /* sheet field edits */
 function fieldValue(el) {
   if (el.type === "checkbox") return el.checked;
-  if (el.type === "number") return el.value === "" ? null : Math.max(0, Number(el.value));
+  if (el.type === "number") return el.value === "" || isNaN(Number(el.value)) ? null : Math.max(0, Number(el.value));
+  if (el.dataset.f === "owner") return el.value.trim();
   return el.value;
 }
 $("#sheet").addEventListener("input", e => {
@@ -1156,15 +1190,19 @@ $("#sheet").addEventListener("input", e => {
     patchItem(openId, { [f]: v, ...extra }, { immediate: el.tagName === "SELECT" || el.type === "checkbox" || el.type === "date" });
     if (["status", "priority", "vetted"].includes(f)) renderSummary();
   }
-  if (el.id === "d-me") { prefs.me = el.value; savePrefs(); $("#d-text").value = draftEmail(items.get(openId)); }
+  if (el.id === "d-me") { prefs.me = el.value; savePrefs(); delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); }
+  if (el.id === "d-text") drafts[openId] = el.value;
 });
 $("#sheet").addEventListener("change", e => {
   const el = e.target;
-  if (el.id === "d-to") { prefs.draftTo = { ...(prefs.draftTo || {}), [openId]: el.value }; savePrefs(); $("#d-text").value = draftEmail(items.get(openId)); }
+  if (el.id === "d-to") { prefs.draftTo = { ...(prefs.draftTo || {}), [openId]: el.value }; savePrefs(); delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); }
   if (el.dataset.f === "status" && el.value === "contacted") {
     const r = items.get(openId); if (r && !r.lastContact) { const d = new Date(); const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; patchItem(openId, { lastContact: iso }, { immediate: true }); const lc = $("#e-lastContact"); if (lc) lc.value = iso; }
   }
   if (el.dataset.f && openId) flushItem(openId);
+});
+$("#sheet").addEventListener("focusout", e => {
+  if (sheetStale && !(e.relatedTarget && $("#sheet").contains(e.relatedTarget))) setTimeout(() => { if (sheetStale && openId && !sheetBusy()) { sheetStale = false; renderSheet(); } }, 0);
 });
 $("#sheet").addEventListener("focusout", e => { if (e.target.dataset && e.target.dataset.f && openId) { const p = pending.get(openId); if (p) { clearTimeout(p.timer); flushItem(openId); } } });
 
@@ -1173,6 +1211,11 @@ function saveContact(i) {
   const k = i === "new" ? "n" : i, g = n => ($(`#c-${n}-${k}`)?.value || "").trim();
   const c = { name: g("name"), title: g("title"), email: g("email"), linkedin: g("linkedin"), why: g("why"), source: g("source") };
   if (!c.name) { $(`#c-name-${k}`).focus(); return toast("Add the person's name first"); }
+  for (const f of ["linkedin", "source"]) {
+    if (!c[f]) continue;
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(c[f]) && /^[\w-]+(\.[\w-]+)+/.test(c[f])) c[f] = "https://" + c[f];
+    if (!safeUrl(c[f])) { $(`#c-${f}-${k}`).focus(); return toast("Links must start with https://"); }
+  }
   const r = items.get(openId); const cs = [...(r.contacts || [])];
   if (i === "new") cs.push(c); else cs[Number(i)] = { ...cs[Number(i)], ...c };
   editingContact = null; patchItem(openId, { contacts: cs }, { immediate: true }); renderSheet(); toast("Saved " + c.name);
