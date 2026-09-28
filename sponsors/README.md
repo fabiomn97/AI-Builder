@@ -14,6 +14,7 @@ people, stage, owner, ask, next step, and a ready-to-edit outreach email.
 
 ## 2026 data and Excel export
 
+- Tiers follow the 2026 ladder (Platinum $25k, Gold $10k, Silver $5k, Entry $2k; 2026 called the top two Petabyte and Terabyte). Data → Sponsorship tiers shows the benefits. Update `TIER_INFO` and `BENEFITS` in `src/tracker.html` when the 2027 tiers are final.
 - Each company has a **2026** status (Confirmed, Received Interest, Outreach Sent, Ghosted, Declined,
   Not approached) with last year's tier, amount and notes. The list has a 2026 column you can sort and filter.
 - **Data → Export Excel** saves an .xlsx with two sheets: *Companies* (every field) and *Contacts*
