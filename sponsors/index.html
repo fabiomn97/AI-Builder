@@ -30,6 +30,8 @@
   --bad: #b3261e;   --bad-soft: #fbe3e1;
   --info: #2f5d9e;  --info-soft: #e3ebf7;
   --muted-soft: #ecebe9;
+  --purple: #7440b8;
+  --slate: #4a4546;
   --shadow: 0 1px 2px rgba(28,26,26,.06), 0 8px 24px rgba(28,26,26,.08);
   --scrim: rgba(20,18,18,.32);
 
@@ -45,7 +47,7 @@
     --bg: #131112; --surface: #1c1a1b; --sunk: #242122; --ink: #f1eded; --ink-2: #bdb5b4; --ink-3: #8c8584;
     --line: #2e2a2b; --line-2: #3d3839; --accent: #e0566b; --accent-ink: #1a0b0e; --accent-soft: #3a1c22;
     --good: #5fc190; --good-soft: #17301f; --warn: #e2b04e; --warn-soft: #33270f; --bad: #f08079; --bad-soft: #3a1a18;
-    --info: #86aee8; --info-soft: #1a2638; --muted-soft: #2a2627;
+    --info: #86aee8; --info-soft: #1a2638; --muted-soft: #2a2627; --purple: #b294ec; --slate: #a39b9c;
     --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45); --scrim: rgba(0,0,0,.55);
     color-scheme: dark;
   }
@@ -54,7 +56,7 @@
   --bg: #131112; --surface: #1c1a1b; --sunk: #242122; --ink: #f1eded; --ink-2: #bdb5b4; --ink-3: #8c8584;
   --line: #2e2a2b; --line-2: #3d3839; --accent: #e0566b; --accent-ink: #1a0b0e; --accent-soft: #3a1c22;
   --good: #5fc190; --good-soft: #17301f; --warn: #e2b04e; --warn-soft: #33270f; --bad: #f08079; --bad-soft: #3a1a18;
-  --info: #86aee8; --info-soft: #1a2638; --muted-soft: #2a2627;
+  --info: #86aee8; --info-soft: #1a2638; --muted-soft: #2a2627; --purple: #b294ec; --slate: #a39b9c;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45); --scrim: rgba(0,0,0,.55);
   color-scheme: dark;
 }
@@ -172,7 +174,7 @@ select.f { padding-right: 28px; appearance: none; background-image: linear-gradi
 .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; padding: 3px 9px 3px 7px; border-radius: 99px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .pill i { width: 7px; height: 7px; border-radius: 50%; flex: none; background: currentColor; }
 /* Stage colors: defaults follow the theme; a team's own picks (Settings) override them on :root. */
-:root { --st-ns_email: var(--good); --st-ns_none: var(--line-2); --st-contacted: var(--info); --st-talking: var(--warn); --st-proposal: var(--accent); --st-committed: var(--good); --st-declined: var(--bad); --st-hold: var(--ink-3); }
+:root { --st-ns_email: var(--slate); --st-ns_none: var(--line-2); --st-contacted: var(--info); --st-talking: var(--warn); --st-proposal: var(--purple); --st-committed: var(--good); --st-declined: var(--bad); --st-hold: var(--ink-3); }
 .stp { background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--ink)); }
 .stp i { background: var(--c); }
 .swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
