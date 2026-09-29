@@ -1,0 +1,1427 @@
+<title>STS 2027 Sponsor Pipeline</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a working ledger. Summary strip up top, filter bar, then a dense list or board; a side sheet edits one company. */
+:root {
+  --bg: #f7f6f5;
+  --surface: #ffffff;
+  --sunk: #efedeb;
+  --ink: #1c1a1a;
+  --ink-2: #57514f;
+  --ink-3: #8a8381;
+  --line: #e3dfdc;
+  --line-2: #d2ccc8;
+  --accent: #a31f34;        /* MIT cardinal */
+  --accent-ink: #ffffff;
+  --accent-soft: #f6e4e7;
+  --good: #1f7a4d;  --good-soft: #e1f1e8;
+  --warn: #9a6200;  --warn-soft: #fbefd6;
+  --bad: #b3261e;   --bad-soft: #fbe3e1;
+  --info: #2f5d9e;  --info-soft: #e3ebf7;
+  --muted-soft: #ecebe9;
+  --purple: #7440b8;
+  --slate: #4a4546;
+  --shadow: 0 1px 2px rgba(28,26,26,.06), 0 8px 24px rgba(28,26,26,.08);
+  --scrim: rgba(20,18,18,.32);
+
+  --f-display: "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --r: 6px;
+  --gutter: clamp(16px, 3vw, 32px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131112; --surface: #1c1a1b; --sunk: #242122; --ink: #f1eded; --ink-2: #bdb5b4; --ink-3: #8c8584;
+    --line: #2e2a2b; --line-2: #3d3839; --accent: #e0566b; --accent-ink: #1a0b0e; --accent-soft: #3a1c22;
+    --good: #5fc190; --good-soft: #17301f; --warn: #e2b04e; --warn-soft: #33270f; --bad: #f08079; --bad-soft: #3a1a18;
+    --info: #86aee8; --info-soft: #1a2638; --muted-soft: #2a2627; --purple: #b294ec; --slate: #a39b9c;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45); --scrim: rgba(0,0,0,.55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #131112; --surface: #1c1a1b; --sunk: #242122; --ink: #f1eded; --ink-2: #bdb5b4; --ink-3: #8c8584;
+  --line: #2e2a2b; --line-2: #3d3839; --accent: #e0566b; --accent-ink: #1a0b0e; --accent-soft: #3a1c22;
+  --good: #5fc190; --good-soft: #17301f; --warn: #e2b04e; --warn-soft: #33270f; --bad: #f08079; --bad-soft: #3a1a18;
+  --info: #86aee8; --info-soft: #1a2638; --muted-soft: #2a2627; --purple: #b294ec; --slate: #a39b9c;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.45); --scrim: rgba(0,0,0,.55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 400 14px/1.5 var(--f-body); -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 1320px; margin: 0 auto; padding-inline: var(--gutter); padding-block: 20px 64px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+a { color: var(--accent); text-underline-offset: 2px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: var(--f-mono); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ——— header ——— */
+.top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; justify-content: space-between; padding-bottom: 14px; border-bottom: 2px solid var(--ink); }
+.brand { display: grid; gap: 2px; min-width: 0; }
+.eyebrow { font: 500 11px/1.2 var(--f-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.eyebrow b { color: var(--accent); font-weight: 500; }
+h1 { margin: 0; font: 800 clamp(28px, 4.6vw, 44px)/1 var(--f-display); font-stretch: 78%; letter-spacing: -.01em; text-wrap: balance; }
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.mode { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--f-mono); color: var(--ink-2); padding: 6px 9px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--surface); }
+.mode i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+.mode[data-mode="shared"] i { background: var(--good); box-shadow: 0 0 0 3px var(--good-soft); }
+.mode[data-mode="local"] i { background: var(--warn); }
+
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); cursor: pointer; font-weight: 500; white-space: nowrap; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--ink-2); }
+.btn.ghost:hover { background: var(--sunk); color: var(--ink); }
+.btn.sm { height: 28px; padding: 0 9px; font-size: 13px; }
+.btn.danger { color: var(--bad); }
+.btn[disabled] { opacity: .5; cursor: not-allowed; }
+.btn svg { width: 15px; height: 15px; flex: none; }
+
+.menu { position: relative; }
+.menu-pop { position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 230px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 8px; box-shadow: var(--shadow); padding: 6px; display: grid; }
+.menu-pop button, .menu-pop label { text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 5px; cursor: pointer; display: grid; gap: 1px; }
+.menu-pop button:hover, .menu-pop label:hover { background: var(--sunk); }
+.menu-pop small { color: var(--ink-3); font-size: 12px; }
+.menu-pop hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+
+/* ——— summary ——— */
+.summary { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 2fr) minmax(0, .9fr); gap: 0; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+.summary > section { padding: 16px 18px; min-width: 0; display: grid; gap: 10px; align-content: start; }
+.summary > section + section { border-left: 1px solid var(--line); }
+.label { font: 500 11px/1.2 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.big { font: 700 30px/1 var(--f-display); font-stretch: 85%; letter-spacing: -.01em; }
+.big small { font: 500 14px/1 var(--f-body); color: var(--ink-3); letter-spacing: 0; margin-left: 4px; }
+.meter { height: 8px; background: var(--sunk); border-radius: 99px; overflow: hidden; }
+.meter span { display: block; height: 100%; background: var(--accent); border-radius: inherit; transition: width .4s ease; }
+.meta-line { color: var(--ink-2); font-size: 13px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+.meta-line b { color: var(--ink); font-weight: 600; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; font-size: 13px; }
+
+.funnel { display: flex; height: 10px; border-radius: 99px; overflow: hidden; background: var(--sunk); gap: 2px; }
+.funnel span { display: block; height: 100%; min-width: 3px; }
+.stages { display: flex; flex-wrap: wrap; gap: 6px; }
+.stage { display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px 5px 8px; border-radius: 99px; border: 1px solid var(--line); background: var(--bg); cursor: pointer; font-size: 12.5px; color: var(--ink-2); }
+.stage:hover { border-color: var(--line-2); color: var(--ink); }
+.stage[aria-pressed="true"] { border-color: var(--ink); color: var(--ink); background: var(--surface); box-shadow: inset 0 0 0 1px var(--ink); }
+.stage i { width: 8px; height: 8px; border-radius: 2px; }
+.stage b { font: 500 12px/1 var(--f-mono); color: var(--ink); }
+
+.due-list { display: grid; gap: 6px; font-size: 13px; }
+.due-list button { display: flex; justify-content: space-between; gap: 10px; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; color: var(--ink); }
+.due-list button:hover span:first-child { text-decoration: underline; }
+.due-list .when { font: 500 12px/1.4 var(--f-mono); color: var(--ink-2); white-space: nowrap; }
+.due-list .when.over { color: var(--bad); }
+.empty-note { color: var(--ink-3); font-size: 13px; }
+
+/* ——— notice ——— */
+.notice { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; padding: 10px 14px; background: var(--accent-soft); border-radius: 8px; font-size: 13px; color: var(--ink); }
+.notice strong { font-weight: 600; }
+.notice .sel { font-family: var(--f-mono); font-size: 12.5px; user-select: all; }
+.notice .spacer { flex: 1; }
+
+/* ——— toolbar ——— */
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.field { position: relative; display: flex; align-items: center; }
+.search { flex: 1 1 240px; min-width: 0; }
+.search input { width: 100%; height: 36px; padding: 0 12px 0 34px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); }
+.search svg { position: absolute; left: 11px; width: 15px; height: 15px; color: var(--ink-3); pointer-events: none; }
+select.f, input.f, textarea.f { height: 36px; padding: 0 10px; border-radius: var(--r); border: 1px solid var(--line-2); background: var(--surface); min-width: 0; }
+select.f { padding-right: 28px; appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 15px) 15px, calc(100% - 10px) 15px; background-size: 5px 5px; background-repeat: no-repeat; }
+.seg { display: inline-flex; border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; background: var(--surface); }
+.seg button { height: 34px; padding: 0 12px; background: none; border: 0; cursor: pointer; color: var(--ink-2); font-weight: 500; }
+.seg button + button { border-left: 1px solid var(--line-2); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.count { color: var(--ink-3); font-size: 13px; margin-left: auto; }
+
+/* ——— list ——— */
+.list { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.row { display: grid; grid-template-columns: minmax(0, 2.2fr) 44px minmax(0, 1.15fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, .85fr) 52px minmax(0, 1.8fr) 84px; gap: 12px; align-items: center; padding: 11px 16px; border-top: 1px solid var(--line); }
+.row.head { border-top: 0; background: var(--sunk); padding-block: 8px; }
+.row.head button { background: none; border: 0; padding: 0; cursor: pointer; font: 500 11px/1.2 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); text-align: left; display: inline-flex; gap: 4px; align-items: center; }
+.row.head button[data-active] { color: var(--ink); }
+.row.item { cursor: pointer; position: relative; }
+.row.item:hover { background: var(--bg); }
+.row.item.sel { background: var(--accent-soft); }
+.row > * { min-width: 0; }
+.co { display: grid; gap: 1px; }
+.co-name { font-weight: 600; font-size: 14.5px; display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.co-sub { color: var(--ink-3); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.flag { font: 500 10.5px/1 var(--f-mono); letter-spacing: .04em; text-transform: uppercase; padding: 3px 5px; border-radius: 3px; white-space: nowrap; }
+.flag.warm { background: var(--accent-soft); color: var(--accent); }
+.flag.unv { background: var(--warn-soft); color: var(--warn); }
+.flag.vet { background: var(--good-soft); color: var(--good); }
+.prio { width: 26px; height: 26px; display: grid; place-items: center; border-radius: 5px; font: 700 13px/1 var(--f-display); }
+.prio.A { background: var(--ink); color: var(--bg); }
+.prio.B { background: var(--line-2); color: var(--ink); }
+.prio.C { background: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-2); }
+.pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; padding: 3px 9px 3px 7px; border-radius: 99px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.pill i { width: 7px; height: 7px; border-radius: 50%; flex: none; background: currentColor; }
+/* Stage colors: defaults follow the theme; a team's own picks (Settings) override them on :root. */
+:root { --st-ns_email: var(--slate); --st-ns_none: var(--line-2); --st-contacted: var(--info); --st-talking: var(--warn); --st-proposal: var(--purple); --st-committed: var(--good); --st-declined: var(--bad); --st-hold: var(--ink-3); }
+.stp { background: color-mix(in srgb, var(--c) 16%, var(--surface)); color: color-mix(in srgb, var(--c) 62%, var(--ink)); }
+.stp i { background: var(--c); }
+.swatches { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; }
+.swatch { display: flex; align-items: center; gap: 10px; font-size: 13.5px; min-width: 0; }
+.swatch input[type="color"] { width: 34px; height: 28px; padding: 2px; border: 1px solid var(--line-2); border-radius: 6px; background: var(--surface); cursor: pointer; flex: none; }
+.swatch input[type="color"]:disabled { cursor: default; }
+.swatch span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 480px) { .swatches { grid-template-columns: minmax(0, 1fr); } }
+/* The 2026 column is plain text on purpose, so it isn't confused with this year's stage colors. */
+.y26 { display: inline-flex; align-items: baseline; gap: 5px; font-size: 12.5px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; color: var(--ink-2); }
+.y26 small { font: 500 11px/1 var(--f-mono); color: var(--ink-3); }
+.y26.s-none { color: var(--ink-3); }
+.lastyear { background: var(--sunk); border-radius: 8px; padding: 14px; display: grid; gap: 12px; }
+.lastyear .sec-h { border-bottom-color: var(--line-2); }
+.cell-2 { color: var(--ink-2); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell-2.none { color: var(--ink-3); }
+.next { display: grid; gap: 1px; font-size: 13px; }
+.next .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.next .d { font: 500 11.5px/1.3 var(--f-mono); color: var(--ink-3); }
+.next .d.over { color: var(--bad); }
+.next .d.soon { color: var(--warn); }
+.money { text-align: right; font: 500 13px/1.3 var(--f-mono); }
+.money .c { color: var(--good); }
+.money .a { color: var(--ink-3); font-size: 12px; }
+.contacts-n { font: 500 13px/1 var(--f-mono); color: var(--ink-2); }
+
+.empty { padding: 48px 20px; text-align: center; color: var(--ink-2); display: grid; gap: 10px; justify-items: center; }
+.empty h3 { margin: 0; font: 700 20px/1.2 var(--f-display); font-stretch: 85%; color: var(--ink); }
+.empty p { margin: 0; max-width: 52ch; }
+
+/* ——— board ——— */
+.board { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(250px, 1fr); gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+.col { background: var(--sunk); border-radius: 8px; padding: 8px; display: grid; gap: 8px; align-content: start; min-height: 160px; }
+.col.drop { outline: 2px dashed var(--accent); outline-offset: -2px; }
+.col-h { display: flex; align-items: center; justify-content: space-between; padding: 4px 4px 2px; }
+.col-h .pill { background: transparent; padding-left: 0; }
+.col-h span.n { font: 500 12px/1 var(--f-mono); color: var(--ink-3); }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 10px 11px; display: grid; gap: 6px; cursor: pointer; }
+.card:hover { border-color: var(--line-2); }
+.card[draggable="true"] { cursor: grab; }
+.card .top-l { display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.card .prio { width: 22px; height: 22px; font-size: 12px; }
+
+/* Inline pickers: priority and tier change straight from the list. A dot marks a value changed from the suggestion. */
+.pick-wrap { position: relative; display: inline-flex; max-width: 100%; min-width: 0; }
+.pick-wrap[data-changed]::after { content: ""; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface); pointer-events: none; }
+.pick { appearance: none; -webkit-appearance: none; font: inherit; color: inherit; border: 1px solid transparent; border-radius: 5px; background-color: transparent; cursor: pointer; margin: 0; }
+.pick:hover:not(:disabled) { border-color: var(--ink-3); }
+.pick:disabled { cursor: default; opacity: 1; }
+.pick option { color: var(--ink); background: var(--surface); font: 400 14px var(--f-body); }
+.prio-pick { width: 30px; height: 26px; padding: 0; text-align: center; text-align-last: center; font: 700 13px/1 var(--f-display); }
+.prio-pick.A { background-color: var(--ink); color: var(--bg); }
+.prio-pick.B { background-color: var(--line-2); color: var(--ink); }
+.prio-pick.C { background-color: transparent; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line-2); }
+.card .prio-pick { width: 26px; height: 22px; font-size: 12px; }
+.tier-pick { width: 100%; max-width: 150px; height: 30px; padding: 0 22px 0 8px; font-size: 13px; color: var(--ink-2); border-color: var(--line); background-image: linear-gradient(45deg, transparent 50%, var(--ink-3) 50%), linear-gradient(135deg, var(--ink-3) 50%, transparent 50%); background-position: calc(100% - 12px) 13px, calc(100% - 8px) 13px; background-size: 4px 4px; background-repeat: no-repeat; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tier-pick.none { color: var(--ink-3); border-style: dashed; }
+.tier-pick:disabled { background-image: none; border-color: transparent; padding-left: 0; }
+.mail { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 4px; flex: none; }
+.mail svg { width: 13px; height: 13px; }
+.mail.ok { color: var(--good); background: var(--good-soft); }
+.mail.no { color: var(--ink-3); background: var(--muted-soft); }
+.c-status { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.sugg { font: 500 11px/1.2 var(--f-body); letter-spacing: 0; text-transform: none; color: var(--accent); }
+.card .co-name { font-size: 14px; }
+.card .meta { display: flex; flex-wrap: wrap; gap: 4px 10px; font-size: 12px; color: var(--ink-3); }
+
+/* ——— sheet ——— */
+.scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; }
+.sheet { position: fixed; top: 0; right: 0; bottom: 0; z-index: 50; width: min(640px, 100%); background: var(--surface); border-left: 1px solid var(--line); box-shadow: var(--shadow); display: grid; grid-template-rows: auto 1fr; padding-top: env(safe-area-inset-top, 0px); }
+.sheet-h { display: flex; gap: 12px; align-items: start; justify-content: space-between; padding: 18px 20px 14px; border-bottom: 1px solid var(--line); }
+.sheet-h .t { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.sheet-h input.name { font: 800 26px/1.1 var(--f-display); font-stretch: 80%; border: 0; background: transparent; padding: 0; width: 100%; border-bottom: 1px dashed transparent; }
+.sheet-h input.name:hover { border-bottom-color: var(--line-2); }
+.sheet-h input.name:focus { outline: none; border-bottom-color: var(--accent); }
+.sheet-b { overflow-y: auto; padding: 18px 20px calc(40px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 24px; align-content: start; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 14px; }
+.grid2 .full { grid-column: 1 / -1; }
+.fl { display: grid; gap: 5px; min-width: 0; }
+.fl > span { font: 500 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.fl input, .fl select, .fl textarea { width: 100%; }
+textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical; line-height: 1.5; }
+.check { display: flex; gap: 9px; align-items: center; font-size: 13.5px; cursor: pointer; }
+.check input { width: 16px; height: 16px; accent-color: var(--accent); }
+.sec { display: grid; gap: 12px; }
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
+.sec-h h3 { margin: 0; font: 700 16px/1.2 var(--f-display); font-stretch: 88%; letter-spacing: .005em; }
+.sec-h small { color: var(--ink-3); font-size: 12px; }
+.warnbox { background: var(--warn-soft); color: var(--ink); border-radius: 6px; padding: 10px 12px; font-size: 13px; }
+.warnbox b { color: var(--warn); }
+
+.people { display: grid; gap: 8px; }
+.person { border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; display: grid; gap: 4px; }
+.person-h { display: flex; justify-content: space-between; gap: 8px; align-items: start; }
+.person-h .n { font-weight: 600; }
+.person .ti { color: var(--ink-2); font-size: 13px; }
+.person .why { color: var(--ink-2); font-size: 13px; }
+.person .links { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12.5px; }
+.person .em { font-family: var(--f-mono); font-size: 12.5px; user-select: all; }
+.person-edit { display: grid; gap: 8px; border: 1px solid var(--accent); border-radius: 6px; padding: 12px; }
+.row-btns { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
+.finders { display: flex; flex-wrap: wrap; gap: 6px; }
+.finders a { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; padding: 5px 9px; border: 1px solid var(--line-2); border-radius: 99px; text-decoration: none; color: var(--ink); background: var(--bg); }
+.finders a:hover { border-color: var(--accent); color: var(--accent); }
+.finders svg { width: 12px; height: 12px; }
+
+.facts { display: grid; gap: 12px; }
+.fact { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 10px; font-size: 13.5px; }
+.fact > span { font: 500 11px/1.6 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+.fact > div { overflow-wrap: anywhere; }
+.srcs { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 12.5px; }
+.srcs a { overflow-wrap: anywhere; }
+.draft { font: 400 13px/1.55 var(--f-mono); min-height: 260px !important; }
+.stamp { color: var(--ink-3); font-size: 12px; }
+
+.toast { position: fixed; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 60; background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 6px; font-size: 13px; box-shadow: var(--shadow); max-width: calc(100% - 32px); }
+
+.modal { position: fixed; inset: 0; z-index: 55; display: grid; place-items: center; padding: 16px; }
+.modal-card { background: var(--surface); border-radius: 10px; box-shadow: var(--shadow); width: min(460px, 100%); padding: 20px; display: grid; gap: 14px; position: relative; }
+.modal-card h3 { margin: 0; font: 700 20px/1.2 var(--f-display); font-stretch: 85%; }
+.modal-card p { margin: 0; color: var(--ink-2); font-size: 13.5px; }
+.modal > .scrim { z-index: 0; }
+.modal > .modal-card { z-index: 1; }
+.modal-card.wide { width: min(760px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; }
+.tiers-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.tiers { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 560px; }
+.tiers th, .tiers td { padding: 8px 10px; border-top: 1px solid var(--line); text-align: center; vertical-align: middle; }
+.tiers thead th { border-top: 0; background: var(--sunk); font: 600 13px/1.25 var(--f-body); }
+.tiers thead th small { display: block; font: 500 12px/1.3 var(--f-mono); color: var(--ink-2); }
+.tiers th[scope="row"] { text-align: left; font-weight: 400; color: var(--ink); }
+.tiers .grp th { text-align: left; background: var(--bg); font: 500 11px/1.2 var(--f-mono); letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.tiers .yes { color: var(--good); font-weight: 600; }
+.tiers .no { color: var(--ink-3); }
+.tier-link { margin-left: auto; font: 500 11px/1.2 var(--f-body); letter-spacing: 0; text-transform: none; }
+.fl > span.with-link { display: flex; align-items: baseline; gap: 8px; }
+
+.skeleton { display: grid; gap: 10px; padding: 20px 16px; }
+.skeleton div { height: 18px; border-radius: 4px; background: linear-gradient(90deg, var(--sunk), var(--line), var(--sunk)); background-size: 200% 100%; animation: shimmer 1.4s infinite linear; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+@media (max-width: 1080px) {
+  .summary { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .summary > section:nth-child(2) { grid-column: 1 / -1; grid-row: 2; border-left: 0; border-top: 1px solid var(--line); }
+  .row { grid-template-columns: minmax(0, 1.9fr) 44px minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr) 80px; }
+  .row .c-contacts, .row .c-owner { display: none; }
+}
+@media (max-width: 720px) {
+  .summary { grid-template-columns: minmax(0, 1fr); }
+  .summary > section + section { border-left: 0; border-top: 1px solid var(--line); }
+  .summary > section:nth-child(2) { grid-row: auto; }
+  .row.head { display: none; }
+  .row.item { grid-template-columns: 30px minmax(0, 1fr) auto; grid-template-areas: "p co co" "p st st" "p y t" "p nx money"; gap: 6px 10px; padding: 12px 14px; }
+  .row .c-prio { grid-area: p; align-self: start; }
+  .row .c-co { grid-area: co; }
+  .row .c-status { grid-area: st; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .row .c-owner { display: none; }
+  .row .c-next { grid-area: nx; }
+  .row .c-money { grid-area: money; align-self: start; }
+  .row .c-status .owner-inline { display: inline; }
+  .row .c-tier { grid-area: t; justify-self: end; }
+  .row .c-money { align-self: center; }
+  .tier-pick { max-width: 130px; }
+  .row .c-s26 { grid-area: y; }
+  .row .c-money .a { display: none; }
+  .fact { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .count { width: 100%; margin-left: 0; }
+  .top-actions { width: 100%; }
+  .mode { order: 3; }
+  #btn-add { flex: 1; justify-content: center; }
+  .search { flex-basis: 100%; }
+  .toolbar select.f { flex: 1 1 30%; }
+}
+@media (max-width: 360px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 720px) {
+  .tiers { min-width: 460px; font-size: 12.5px; }
+  .tiers th, .tiers td { padding: 7px 8px; }
+  .tiers th[scope="row"], .tiers thead th:first-child { position: sticky; left: 0; background: var(--surface); width: 150px; box-shadow: 1px 0 0 var(--line); }
+  .tiers thead th:first-child { background: var(--sunk); }
+}
+.owner-inline { display: none; color: var(--ink-3); font-size: 12.5px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <div class="eyebrow"><b>MIT Sloan Tech Summit</b> · 2027 edition · Sponsorship</div>
+      <h1>Sponsor pipeline</h1>
+    </div>
+    <div class="top-actions">
+      <span class="mode" id="mode" data-mode="loading" title=""><i></i><span id="mode-label">Connecting…</span></span>
+      <button class="btn primary" id="btn-add" type="button"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3v10M3 8h10"/></svg>Add company</button>
+      <div class="menu">
+        <button class="btn" id="btn-data" type="button" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 12v2h10v-2"/></svg>Data</button>
+        <div class="menu-pop" id="menu-data" hidden>
+          <button type="button" data-act="xlsx">Export Excel<small>Same columns as the 2026 tracker, plus details, contacts and tiers</small></button>
+          <button type="button" data-act="csv">Export CSV<small>The 2026 tracker columns, one row per company</small></button>
+          <button type="button" data-act="json">Export JSON<small>Full backup, including contacts</small></button>
+          <label for="file-import" id="act-import">Import JSON<small>Merges by company; newer edits win</small></label>
+          <hr>
+          <button type="button" data-act="tiers">Sponsorship tiers<small>What each tier includes</small></button>
+          <button type="button" data-act="settings">Settings<small>Goal, stage colors, your name for email drafts</small></button>
+          <button type="button" data-act="reset" id="act-reset" hidden>Reset to repo data<small>Discards this browser's edits</small></button>
+        </div>
+        <input type="file" id="file-import" accept="application/json,.json" class="sr">
+      </div>
+    </div>
+  </header>
+
+  <div class="summary" id="summary">
+    <section>
+      <div class="label">Committed</div>
+      <div class="big num" id="sum-committed">$0</div>
+      <div class="meter" aria-hidden="true"><span id="sum-meter" style="width:0%"></span></div>
+      <div class="meta-line" id="sum-goal"></div>
+    </section>
+    <section>
+      <div class="label">Pipeline by stage</div>
+      <div class="funnel" id="funnel" aria-hidden="true"></div>
+      <div class="stages" id="stages" role="group" aria-label="Filter by stage"></div>
+    </section>
+    <section>
+      <div class="label">Next steps due</div>
+      <div class="due-list" id="due"></div>
+    </section>
+  </div>
+
+  <div class="notice" id="notice">
+    <span><strong>MIT rule:</strong> the Student Life Office must vet each company before you ask it for money. Send the list to <span class="sel">slquestions@mit.edu</span> and use MIT's sponsorship commitment letter.</span>
+    <span class="spacer"></span>
+    <span id="vet-count" class="num"></span>
+  </div>
+
+  <div class="toolbar">
+    <label class="field search"><span class="sr">Search</span>
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/></svg>
+      <input id="q" type="search" placeholder="Search companies, people, notes">
+    </label>
+    <label class="sr" for="f-sector">Sector</label>
+    <select class="f" id="f-sector"></select>
+    <label class="sr" for="f-prio">Priority</label>
+    <select class="f" id="f-prio">
+      <option value="">Priority</option><option value="A">A · Go first</option><option value="B">B · Strong fit</option><option value="C">C · Stretch</option>
+    </select>
+    <label class="sr" for="f-owner">Owner</label>
+    <select class="f" id="f-owner"></select>
+    <label class="sr" for="f-s26">2026 status</label>
+    <select class="f" id="f-s26"></select>
+    <div class="seg" role="group" aria-label="View">
+      <button type="button" id="v-list" aria-pressed="true">List</button>
+      <button type="button" id="v-board" aria-pressed="false">Board</button>
+    </div>
+    <span class="count num" id="count"></span>
+  </div>
+
+  <main id="main">
+    <div class="list"><div class="skeleton"><div></div><div></div><div></div><div></div><div></div></div></div>
+  </main>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="sheet" id="sheet" hidden aria-label="Company details"></aside>
+<div class="modal" id="modal" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(() => {
+"use strict";
+
+/* ——— vocabulary ——— */
+const STAGES = [
+  { id: "not_started", label: "Not started", color: "var(--line-2)" },
+  { id: "contacted",   label: "Contacted",   color: "var(--info)" },
+  { id: "talking",     label: "In conversation", color: "var(--warn)" },
+  { id: "proposal",    label: "Proposal sent", color: "var(--accent)" },
+  { id: "committed",   label: "Committed",   color: "var(--good)" },
+  { id: "declined",    label: "Declined",    color: "var(--bad)" },
+  { id: "hold",        label: "On hold",     color: "var(--ink-3)" },
+];
+const STAGE = Object.fromEntries(STAGES.map(s => [s.id, s]));
+/* "Not started" is split by whether a contact email is on file, so the team can see who is ready to email. */
+const hasEmail = r => (r.contacts || []).some(c => /\S+@\S+\.\S+/.test(c.email || ""));
+const VIEW_STAGES = [
+  { id: "ns_email", status: "not_started", label: "Not started · has email" },
+  { id: "ns_none", status: "not_started", label: "Not started · needs email" },
+  ...STAGES.slice(1).map(s => ({ ...s, status: s.id })),
+].map(s => ({ ...s, color: `var(--st-${s.id})` }));
+const VIEW_STAGE = Object.fromEntries(VIEW_STAGES.map(s => [s.id, s]));
+const viewStage = r => r.status === "not_started" ? (hasEmail(r) ? "ns_email" : "ns_none") : r.status;
+const ICON_MAIL = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="m2.5 4.5 5.5 4.5 5.5-4.5"/></svg>';
+const PRIO_LABEL = { A: "A · Go first", B: "B · Strong fit", C: "C · Stretch" };
+/* Tier ladder. These are the 2026 tiers (2027 tiers aren't final yet); 2026 called Platinum "Petabyte" and Gold "Terabyte". */
+const TIER_INFO = [
+  { id: "Platinum", price: 25000, legacy: "Petabyte" },
+  { id: "Gold", price: 10000, legacy: "Terabyte" },
+  { id: "Silver", price: 5000 },
+  { id: "Entry", price: 2000 },
+];
+const TIER_BY = Object.fromEntries(TIER_INFO.map(t => [t.id, t]));
+const LEGACY_TIER = Object.fromEntries(TIER_INFO.filter(t => t.legacy).map(t => [t.legacy, t.id]));
+const TIERS = ["", ...TIER_INFO.map(t => t.id), "Hackathon / in-kind", "Partner (non-cash)"];
+const tierLabel = t => TIER_BY[t] ? `${t} · $${TIER_BY[t].price / 1000}k` : (t || "—");
+const BENEFITS = [
+  ["Speaking", "Keynote or fireside speaker", [true, true, false, false]],
+  ["Speaking", "Panel participant", [true, true, false, false]],
+  ["Access", "Complimentary tickets", [10, 8, 5, 2]],
+  ["Access", "Recruiting booth or table", [true, true, true, false]],
+  ["Access", "Networking lunch sponsorship", [true, false, false, false]],
+  ["Recruiting", "Resume book access", [true, true, true, true]],
+  ["Recruiting", "Post-conference attendee insights", [true, true, true, true]],
+  ["Branding", "Logo placement (website, program)", ["Marquee", "Premium", "Standard", "Listed"]],
+  ["Branding", "LinkedIn post", ["Dedicated", "Shared", "Shared", ""]],
+];
+/* How each company ended up at the 2026 Summit, from the team's 2026 tracker. */
+const S26 = [
+  { id: "Confirmed", cls: "confirmed" }, { id: "Received Interest", cls: "interest" }, { id: "Outreach Sent", cls: "sent" },
+  { id: "Ghosted", cls: "ghosted" }, { id: "Declined", cls: "declined" }, { id: "", cls: "none", label: "Not approached" },
+];
+const S26BY = Object.fromEntries(S26.map(x => [x.id, x]));
+const SECTORS = ["Big Tech & Cloud", "AI & Data", "Fintech & Finance", "Consulting", "Venture Capital", "Boston Tech", "Enterprise & Industrial", "Health & Bio AI", "Ecosystem & Community"];
+const PRIO_ORDER = { A: 0, B: 1, C: 2 };
+const LS_DATA = "sts27.targets.v1", LS_SETTINGS = "sts27.settings.v1", LS_PREFS = "sts27.prefs.v1";
+
+/* ——— state ——— */
+let mode = "loading";           // "shared" | "local" | "readonly"
+let db = null, user = null, downloads = null, myId = null, canWrite = null;
+let items = new Map();          // id -> record
+let settings = { goal: 0 };
+let prefs = loadJSON(LS_PREFS, {}) || {};
+let view = prefs.view || "list";
+let filters = { q: "", sector: "", prio: "", owner: "", stage: "", s26: "__all" };
+let sort = prefs.sort || { key: "prio", dir: 1 };
+let openId = null;
+let editingContact = null;      // index or "new"
+let names = {};                 // user id -> display name (shared mode)
+const pending = new Map();      // id -> {timer, patch, inflight}
+const drafts = {};              // id -> outreach draft the viewer edited by hand (this page load only)
+
+/* ——— helpers ——— */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const money = n => n === null || n === undefined || n === "" || isNaN(Number(n)) ? "" : "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 0 });
+const slug = s => String(s).toLowerCase().normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/[\s_]+/g, "-").replace(/-+/g, "-").slice(0, 60) || ("co-" + Date.now());
+const today = () => { const d = new Date(); d.setHours(0,0,0,0); return d; };
+const parseDate = s => { if (!s) return null; const [y,m,d] = s.split("-").map(Number); return y ? new Date(y, m-1, d) : null; };
+const fmtDate = s => { const d = parseDate(s); return d ? d.toLocaleDateString("en-US", { month: "short", day: "numeric" }) : ""; };
+const daysUntil = s => { const d = parseDate(s); return d ? Math.round((d - today()) / 864e5) : null; };
+function loadJSON(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function saveJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch { return false; } }
+function savePrefs() { prefs.view = view; prefs.sort = sort; saveJSON(LS_PREFS, prefs); }
+let toastT;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+function normalize(r) {
+  return {
+    name: "", sector: "", priority: "B", tier: "", status: "not_started", owner: "", ask: null, committed: null,
+    nextStep: "", nextDate: "", lastContact: "", vetted: false, warm: "", unverified: false,
+    fit: "", angle: "", mitTies: "", programs: "", channel: "", contacts: [], sources: [], notes: "",
+    product: "", tags: "", leadWarmth: "", speaking: "",
+    s26Status: "", s26Tier: "", s26Amount: null, s26Warmth: "", s26Notes: "",
+    updatedAt: "", updatedBy: "", ...r,
+  };
+}
+/* Only web links from shared data become hrefs; anything else (javascript:, data:) is dropped. */
+const safeUrl = u => /^https?:\/\/[^\s"'<>]+$/i.test(String(u || "").trim()) ? String(u).trim() : "";
+const ICON_EXT = '<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 2H2v8h8V7M7 2h3v3M10 2 5.5 6.5"/></svg>';
+
+/* ——— storage: one interface, two backends ——— */
+async function boot() {
+  let viewer = !!(window.claude && typeof window.claude.use === "function");
+  if (viewer) {
+    try { db = await window.claude.use("db"); } catch { db = null; }
+  }
+  if (db) {
+    [user, downloads] = await Promise.all([
+      window.claude.use("user").catch(() => null),
+      window.claude.use("downloads").catch(() => null),
+    ]);
+    myId = user ? await user.id() : null;
+    canWrite = user ? await user.can("data.write") : null;
+    setMode(canWrite === false ? "readonly" : "shared");
+    db.collection("targets").onSnapshot(snap => {
+      const next = new Map();
+      snap.docs.forEach(d => next.set(d.id, normalize(d.data())));
+      /* Keep this viewer's unsaved and in-flight edits on top of what the store sent. */
+      for (const [id, p] of pending) { const cur = next.get(id); if (cur) next.set(id, { ...cur, ...p.inflight, ...p.patch }); }
+      items = next; render(); resolveNames();
+    }, err => { console.warn(err); toast("Live updates stopped. Reload the page to reconnect."); });
+    db.doc("meta/settings").onSnapshot(s => { settings = { goal: 0, ...(s.exists ? s.data() : {}) }; applyStageColors(); renderSummary(); }, () => {});
+  } else {
+    setMode("local");
+    const stored = loadJSON(LS_DATA, null);
+    let base = stored;
+    if (!base) base = await loadRepoData();
+    items = new Map((base || []).map(r => [r.id, normalize(r)]));
+    settings = { goal: 0, ...(loadJSON(LS_SETTINGS, {}) || {}) }; applyStageColors();
+    render();
+  }
+}
+async function loadRepoData() {
+  const inline = document.getElementById("seed-data");
+  if (inline) { try { return JSON.parse(inline.textContent); } catch {} }
+  try { const r = await fetch("targets.json", { cache: "no-store" }); if (r.ok) return await r.json(); } catch {}
+  return [];
+}
+function setMode(m) {
+  mode = m;
+  const el = $("#mode");
+  el.dataset.mode = m === "readonly" ? "shared" : m;
+  $("#mode-label").textContent = m === "shared" ? "Shared · live" : m === "readonly" ? "Shared · view only" : "Saved in this browser";
+  el.title = m === "local" ? "Edits stay in this browser. Use Data → Export JSON to share them, or commit the file as sponsors/targets.json." : "Everyone with access sees edits live.";
+  $("#act-reset").hidden = m !== "local";
+  $("#btn-add").hidden = m === "readonly";
+  $("#act-import").hidden = m === "readonly";
+}
+function persistLocal() {
+  const ok = saveJSON(LS_DATA, [...items.entries()].map(([id, r]) => ({ id, ...r })));
+  if (!ok) toast("This browser blocked saving. Export JSON to keep your edits.");
+}
+async function stampPatch(patch) {
+  return { ...patch, updatedAt: new Date().toISOString(), ...(myId ? { updatedBy: myId } : {}) };
+}
+/* Coalesce typing into one write per pause, one in-flight write per company. */
+function patchItem(id, patch, { immediate = false } = {}) {
+  if (mode === "readonly") return;
+  const cur = items.get(id); if (!cur) return;
+  items.set(id, { ...cur, ...patch, updatedAt: new Date().toISOString() });
+  const p = pending.get(id) || { patch: {}, timer: null, busy: false };
+  Object.assign(p.patch, patch);
+  clearTimeout(p.timer);
+  pending.set(id, p);
+  const flush = () => flushItem(id);
+  if (immediate) flush(); else p.timer = setTimeout(flush, 650);
+  renderMainSoon(); renderSummary();
+}
+async function flushItem(id) {
+  const p = pending.get(id); if (!p || p.busy) return;
+  const patch = p.patch; p.patch = {};
+  if (!Object.keys(patch).length) return;
+  if (mode === "local") { persistLocal(); pending.delete(id); return; }
+  p.busy = true; p.inflight = patch;
+  try { await db.doc("targets/" + id).update(await stampPatch(patch)); p.retries = 0; }
+  catch (e) {
+    const code = e && e.code;
+    /* A transient failure keeps the edit queued and retries a couple of times; anything else is reported and dropped. */
+    if ((code === "unavailable" || code === "resource_exhausted") && (p.retries || 0) < 2) {
+      p.retries = (p.retries || 0) + 1; p.patch = { ...patch, ...p.patch };
+      setTimeout(() => flushItem(id), 1500 + Math.random() * 1500);
+    } else handleWriteError(e);
+  }
+  finally { p.busy = false; p.inflight = null; if (Object.keys(p.patch).length) { if (!p.retries) flushItem(id); } else pending.delete(id); }
+}
+async function createItem(rec) {
+  const id = uniqueId(slug(rec.name));
+  const full = normalize({ ...rec, updatedAt: new Date().toISOString() });
+  items.set(id, full);
+  if (mode === "local") persistLocal();
+  else { try { await db.doc("targets/" + id).set(await stampPatch(full)); } catch (e) { handleWriteError(e); } }
+  render(); return id;
+}
+async function deleteItem(id) {
+  items.delete(id);
+  if (mode === "local") persistLocal();
+  else { try { await db.doc("targets/" + id).delete(); } catch (e) { handleWriteError(e); } }
+  closeSheet(); render(); toast("Company removed");
+}
+function uniqueId(base) { let id = base, n = 2; while (items.has(id)) id = base + "-" + n++; return id; }
+function handleWriteError(e) {
+  const code = e && e.code;
+  if (code === "invalid_argument" && canWrite !== true) { setMode("readonly"); toast("You can view this tracker but not edit it. Ask the owner for Contributor access."); render(); }
+  else if (code === "invalid_argument") toast("That change couldn't be saved. Try a shorter value, then reload if it keeps happening.");
+  else if (code === "quota_exceeded") toast("The shared tracker is full. Remove companies you no longer need.");
+  else toast("Couldn't save that change. Check your connection and try again.");
+}
+async function saveSettings(patch) {
+  settings = { ...settings, ...patch };
+  if (mode === "local") saveJSON(LS_SETTINGS, settings);
+  else if (mode === "shared") { try { await db.doc("meta/settings").set(settings); } catch (e) { handleWriteError(e); } }
+  renderSummary();
+}
+async function resolveNames() {
+  if (!user) return;
+  const ids = [...new Set([...items.values()].map(r => r.updatedBy).filter(Boolean))];
+  if (!ids.length) return;
+  try { const ps = await user.profiles(ids); names = Object.fromEntries(ids.map(i => [i, (ps[i] && ps[i].name) || ""])); } catch {}
+  if (openId) renderStamp();
+}
+
+/* ——— derived views ——— */
+function filtered() {
+  const q = filters.q.trim().toLowerCase();
+  let arr = [...items.entries()].map(([id, r]) => ({ id, ...r }));
+  arr = arr.filter(r =>
+    (!filters.sector || r.sector === filters.sector) &&
+    (!filters.prio || r.priority === filters.prio) &&
+    (!filters.owner || (filters.owner === "__none" ? !(r.owner || "").trim() : (r.owner || "").trim() === filters.owner)) &&
+    (!filters.stage || viewStage(r) === filters.stage) &&
+    (filters.s26 === "__all" || (r.s26Status || "") === filters.s26) &&
+    (!q || [r.name, r.sector, r.owner, r.notes, r.fit, r.mitTies, r.warm, r.nextStep, r.product, r.tags, r.s26Status, r.s26Warmth, r.s26Notes, ...(r.contacts || []).map(c => c.name + " " + c.title + " " + (c.email || ""))].join(" ").toLowerCase().includes(q))
+  );
+  const k = sort.key, d = sort.dir;
+  const stageIdx = r => VIEW_STAGES.findIndex(x => x.id === viewStage(r));
+  arr.sort((a, b) => {
+    let x, y;
+    if (k === "prio") { x = PRIO_ORDER[a.priority] ?? 9; y = PRIO_ORDER[b.priority] ?? 9; if (x === y) { x = a.warm ? 0 : 1; y = b.warm ? 0 : 1; } }
+    else if (k === "name") { return d * a.name.localeCompare(b.name); }
+    else if (k === "status") { x = stageIdx(a); y = stageIdx(b); }
+    else if (k === "owner") { return d * ((a.owner || "~").localeCompare(b.owner || "~")); }
+    else if (k === "next") { x = a.nextDate || "9999"; y = b.nextDate || "9999"; return d * x.localeCompare(y); }
+    else if (k === "s26") { const o = s => { const i = S26.findIndex(x => x.id === (s || "")); return i < 0 ? 9 : i; }; x = o(a.s26Status); y = o(b.s26Status); }
+    else if (k === "money") { x = -(a.committed ?? a.ask ?? 0); y = -(b.committed ?? b.ask ?? 0); }
+    if (x !== y) return d * (x < y ? -1 : 1);
+    return a.name.localeCompare(b.name);
+  });
+  return arr;
+}
+
+/* ——— render ——— */
+let mainT;
+function renderMainSoon() { clearTimeout(mainT); mainT = setTimeout(renderMain, 60); }
+function render() {
+  renderFilters(); renderSummary(); renderMain();
+  if (!openId) return;
+  if (!items.has(openId)) return closeSheet();
+  if (sheetBusy()) { sheetStale = true; renderStamp(); } else renderSheet();
+}
+/* Don't rebuild the side sheet under someone who is typing in it or filling in a person. */
+let sheetStale = false;
+function sheetBusy() {
+  const a = document.activeElement;
+  return editingContact !== null || !!(a && a.closest && a.closest("#sheet") && a.matches("input, textarea, select"));
+}
+
+function renderFilters() {
+  const sec = $("#f-sector"), cur = filters.sector;
+  const present = new Set([...items.values()].map(r => r.sector).filter(Boolean));
+  const list = [...SECTORS.filter(s => present.has(s)), ...[...present].filter(s => !SECTORS.includes(s)).sort()];
+  sec.innerHTML = '<option value="">Sector</option>' + list.map(s => `<option${s === cur ? " selected" : ""}>${esc(s)}</option>`).join("");
+  const own = $("#f-owner"), co = filters.owner;
+  const owners = [...new Set([...items.values()].map(r => (r.owner || "").trim()).filter(Boolean))].sort();
+  own.innerHTML = '<option value="">Owner</option><option value="__none"' + (co === "__none" ? " selected" : "") + '>Unassigned</option>' + owners.map(o => `<option value="${esc(o)}"${o === co ? " selected" : ""}>${esc(o)}</option>`).join("");
+  const y = $("#f-s26"), cy = filters.s26;
+  y.innerHTML = `<option value="__all"${cy === "__all" ? " selected" : ""}>2026 status</option>` + S26.map(x => `<option value="${esc(x.id)}"${x.id === cy ? " selected" : ""}>${esc(x.label || x.id)}</option>`).join("");
+  let dl = document.getElementById("owners-dl");
+  if (!dl) { dl = document.createElement("datalist"); dl.id = "owners-dl"; document.body.appendChild(dl); }
+  dl.innerHTML = owners.map(o => `<option value="${esc(o)}">`).join("");
+}
+
+function renderSummary() {
+  const all = [...items.values()];
+  const committed = all.reduce((s, r) => s + (r.status === "committed" ? Number(r.committed ?? r.ask ?? 0) : 0), 0);
+  const open = all.filter(r => ["contacted", "talking", "proposal"].includes(r.status));
+  const openAsk = open.reduce((s, r) => s + Number(r.ask || 0), 0);
+  const nCommitted = all.filter(r => r.status === "committed").length;
+  $("#sum-committed").innerHTML = esc(money(committed) || "$0") + (settings.goal ? `<small>of ${esc(money(settings.goal))}</small>` : "");
+  $("#sum-meter").style.width = settings.goal ? Math.min(100, committed / settings.goal * 100).toFixed(1) + "%" : "0%";
+  const last = all.filter(r => r.s26Status === "Confirmed"), lastSum = last.reduce((s, r) => s + Number(r.s26Amount || 0), 0);
+  $("#sum-goal").innerHTML = `<span><b class="num">${nCommitted}</b> committed</span><span><b class="num">${esc(money(openAsk) || "$0")}</b> open asks</span>` +
+    (last.length ? `<span>2026: <b class="num">${esc(money(lastSum))}</b> from ${last.length} sponsors</span>` : "") +
+    (settings.goal ? "" : (mode !== "readonly" ? ` <button class="linkish" type="button" data-act="settings">Set a goal</button>` : ""));
+
+  const counts = Object.fromEntries(VIEW_STAGES.map(s => [s.id, 0]));
+  all.forEach(r => { const k = viewStage(r); counts[k] = (counts[k] || 0) + 1; });
+  const total = all.length || 1;
+  $("#funnel").innerHTML = VIEW_STAGES.filter(s => counts[s.id]).map(s => `<span style="flex:${counts[s.id] / total};background:${s.color}" title="${esc(s.label)}: ${counts[s.id]}"></span>`).join("");
+  $("#stages").innerHTML = VIEW_STAGES.map(s => `<button type="button" class="stage" data-stage="${s.id}" aria-pressed="${filters.stage === s.id}"><i style="background:${s.color}"></i>${esc(s.label)} <b class="num">${counts[s.id] || 0}</b></button>`).join("");
+
+  const due = all.map((r, i) => ({ r, id: [...items.keys()][i] }))
+    .filter(x => x.r.nextDate && !["committed", "declined"].includes(x.r.status))
+    .map(x => ({ ...x, d: daysUntil(x.r.nextDate) }))
+    .filter(x => x.d !== null && x.d <= 7)
+    .sort((a, b) => a.d - b.d).slice(0, 5);
+  $("#due").innerHTML = due.length ? due.map(x => `<button type="button" data-open="${esc(x.id)}"><span>${esc(x.r.name)}</span><span class="when${x.d < 0 ? " over" : ""}">${x.d < 0 ? Math.abs(x.d) + "d overdue" : x.d === 0 ? "today" : "in " + x.d + "d"}</span></button>`).join("")
+    : `<div class="empty-note">Nothing due in the next 7 days. Add a next-step date to a company to see it here.</div>`;
+
+  const vetted = all.filter(r => r.vetted).length;
+  $("#vet-count").textContent = all.length ? `${vetted} of ${all.length} vetted` : "";
+}
+
+function statusPill(r) { const v = viewStage(r), st = STAGE[r.status] || STAGE.not_started; return `<span class="pill stp" style="--c:var(--st-${v})"><i></i>${esc(st.label)}</span>`; }
+function mailBadge(r) {
+  if (r.status !== "not_started") return "";
+  return hasEmail(r) ? `<span class="mail ok" title="A contact email is on file">${ICON_MAIL}<span class="sr">Has email</span></span>`
+                     : `<span class="mail no" title="No contact email yet">${ICON_MAIL}<span class="sr">Needs email</span></span>`;
+}
+/* Pickers keep the original suggestion (saved the first time someone changes it) so a change is visible. */
+function changedFrom(r, f) { const k = f === "priority" ? "suggestedPriority" : "suggestedTier"; return r[k] !== undefined && r[k] !== (r[f] || "") ? r[k] : null; }
+function prioPick(r) {
+  const was = changedFrom(r, "priority"), dis = mode === "readonly" ? " disabled" : "";
+  return `<span class="pick-wrap"${was !== null ? ` data-changed title="Suggested: ${esc(was || "none")}"` : ""}><select class="pick prio-pick ${esc(r.priority)}" data-pick="priority" data-id="${esc(r.id)}" aria-label="Priority for ${esc(r.name)}"${dis}>${["A", "B", "C"].map(v => `<option value="${v}"${v === r.priority ? " selected" : ""}>${v}</option>`).join("")}</select></span>`;
+}
+function tierPick(r) {
+  const was = changedFrom(r, "tier"), dis = mode === "readonly" ? " disabled" : "";
+  return `<span class="pick-wrap"${was !== null ? ` data-changed title="Suggested: ${esc(was ? tierLabel(was) : "no tier")}"` : ""}><select class="pick tier-pick${r.tier ? "" : " none"}" data-pick="tier" data-id="${esc(r.id)}" aria-label="Tier for ${esc(r.name)}"${dis}>${[...TIERS, ...(r.tier && !TIERS.includes(r.tier) ? [r.tier] : [])].map(t => `<option value="${esc(t)}"${t === (r.tier || "") ? " selected" : ""}>${esc(t || "Choose tier")}</option>`).join("")}</select></span>`;
+}
+/* One place builds a priority/tier change: it records the suggestion once and keeps a tier-priced ask in step. */
+function pickPatch(r, f, v) {
+  const patch = { [f]: v }, sk = f === "priority" ? "suggestedPriority" : "suggestedTier";
+  if (r[sk] === undefined) patch[sk] = r[f] || "";
+  if (f === "tier") {
+    const old = TIER_BY[r.tier]?.price, empty = r.ask === null || r.ask === undefined || r.ask === "";
+    if (TIER_BY[v] && (empty || r.ask === old)) patch.ask = TIER_BY[v].price;
+    else if (!TIER_BY[v] && old !== undefined && r.ask === old) patch.ask = null;
+  }
+  return patch;
+}
+function s26Chip(r) {
+  const s = S26BY[r.s26Status || ""] || { cls: "none", id: r.s26Status };
+  const extra = r.s26Status === "Confirmed" && r.s26Amount ? ` <small>$${esc(Math.round(r.s26Amount / 1000))}k</small>` : "";
+  return `<span class="y26 s-${s.cls}" title="2026 Summit: ${esc(s.label || s.id)}">${esc(s.label || s.id)}${extra}</span>`;
+}
+function nextCell(r) {
+  if (!r.nextStep && !r.nextDate) return `<span class="cell-2 none">No next step</span>`;
+  const d = daysUntil(r.nextDate), cls = d === null ? "" : d < 0 ? " over" : d <= 3 ? " soon" : "";
+  return `<div class="next"><span class="t">${esc(r.nextStep || "Follow up")}</span>${r.nextDate ? `<span class="d${cls}">${esc(fmtDate(r.nextDate))}${d < 0 ? " · overdue" : ""}</span>` : ""}</div>`;
+}
+function flags(r) {
+  return (r.warm ? `<span class="flag warm" title="${esc(r.warm)}">Warm</span>` : "") +
+         (r.unverified ? `<span class="flag unv" title="Research incomplete. Verify before outreach.">Unverified</span>` : "") +
+         (r.vetted ? `<span class="flag vet" title="Vetted by the Student Life Office">Vetted</span>` : "");
+}
+
+function renderMain() {
+  const arr = filtered();
+  $("#count").textContent = `${arr.length} of ${items.size} companies`;
+  $("#v-list").setAttribute("aria-pressed", view === "list");
+  $("#v-board").setAttribute("aria-pressed", view === "board");
+  const main = $("#main");
+  if (!items.size) {
+    main.innerHTML = `<div class="list"><div class="empty"><h3>No companies yet</h3><p>${mode === "readonly" ? "The sponsorship team hasn't added any companies yet." : "Add your first target company, or import a JSON export from the Data menu."}</p>${mode === "readonly" ? "" : `<button class="btn primary" type="button" data-act="add">Add company</button>`}</div></div>`;
+    return;
+  }
+  if (view === "board") return renderBoard(arr);
+  const hd = (key, label) => `<button type="button" data-sort="${key}"${sort.key === key ? " data-active" : ""}>${label}${sort.key === key ? (sort.dir > 0 ? " ↑" : " ↓") : ""}</button>`;
+  let html = `<div class="list" role="table" aria-label="Sponsor targets"><div class="row head" role="row">
+    <div>${hd("name", "Company")}</div><div title="Pick A, B or C for each company">${hd("prio", "Pri")}</div><div>${hd("status", "Stage")}</div><div class="c-s26">${hd("s26", "2026")}</div><div class="c-tier"><button type="button" data-act="tiers" title="Compare tiers">Tier</button></div>
+    <div class="c-owner">${hd("owner", "Owner")}</div><div class="c-contacts"><button type="button" disabled>Contacts</button></div><div>${hd("next", "Next step")}</div><div style="text-align:right">${hd("money", "Ask")}</div></div>`;
+  if (!arr.length) html += `<div class="empty"><h3>No matches</h3><p>No company matches these filters.</p><button class="btn" type="button" data-act="clear">Clear filters</button></div>`;
+  html += arr.map(r => `<div class="row item${r.id === openId ? " sel" : ""}" role="row" tabindex="0" data-open="${esc(r.id)}">
+    <div class="c-co co"><div class="co-name">${esc(r.name)} ${flags(r)}</div><div class="co-sub">${esc(r.sector || "No sector")}${r.warm ? " · " + esc(r.warm) : ""}</div></div>
+    <div class="c-prio">${prioPick(r)}</div>
+    <div class="c-status">${statusPill(r)}${mailBadge(r)}<span class="owner-inline">${esc(r.owner ? "· " + r.owner : "· Unassigned")}</span></div>
+    <div class="c-s26">${s26Chip(r)}</div>
+    <div class="c-tier">${tierPick(r)}</div>
+    <div class="c-owner cell-2${r.owner ? "" : " none"}">${esc(r.owner || "Unassigned")}</div>
+    <div class="c-contacts contacts-n">${(r.contacts || []).length}</div>
+    <div class="c-next">${nextCell(r)}</div>
+    <div class="c-money money">${r.committed != null ? `<div class="c">${esc(money(r.committed))}</div>` : r.ask != null ? `<div>${esc(money(r.ask))}</div>` : `<div class="a">—</div>`}</div>
+  </div>`).join("");
+  main.innerHTML = html + "</div>";
+}
+
+function renderBoard(arr) {
+  const canDrag = mode !== "readonly";
+  $("#main").innerHTML = `<div class="board">${VIEW_STAGES.map(s => {
+    const col = arr.filter(r => viewStage(r) === s.id);
+    return `<div class="col" data-col="${s.status}"><div class="col-h"><span class="pill stp" style="--c:var(--st-${s.id})"><i></i>${esc(s.label)}</span><span class="n">${col.length}</span></div>
+      ${col.map(r => `<div class="card" data-open="${esc(r.id)}" tabindex="0"${canDrag ? ' draggable="true"' : ""} data-id="${esc(r.id)}">
+        <div class="top-l"><div class="co-name">${esc(r.name)}</div>${prioPick(r)}</div>
+        <div class="meta"><span>${esc(r.owner || "Unassigned")}</span>${r.tier ? `<span>${esc(r.tier)}</span>` : ""}${r.committed != null || r.ask != null ? `<span class="mono">${esc(money(r.committed ?? r.ask))}</span>` : ""}</div>
+        ${r.nextStep || r.nextDate ? nextCell(r) : ""}
+      </div>`).join("")}</div>`;
+  }).join("")}</div>`;
+}
+
+/* ——— sheet (one company) ——— */
+function openSheet(id) {
+  openId = id; editingContact = null;
+  $("#sheet").hidden = false; $("#scrim").hidden = false;
+  renderSheet(); renderMain();
+  setTimeout(() => $("#sheet .sheet-b")?.scrollTo(0, 0), 0);
+}
+function closeSheet() {
+  if (openId && pending.has(openId)) flushItem(openId);
+  openId = null; editingContact = null;
+  $("#sheet").hidden = true; $("#scrim").hidden = true; renderMain();
+}
+function opt(list, cur) { return list.map(v => { const [val, lab] = Array.isArray(v) ? v : [v, v || "—"]; return `<option value="${esc(val)}"${val === cur ? " selected" : ""}>${esc(lab)}</option>`; }).join(""); }
+
+function linkedinSearch(company, extra) {
+  return "https://www.linkedin.com/search/results/people/?keywords=" + encodeURIComponent(`${extra} ${company}`.trim());
+}
+function finders(r) {
+  const co = r.name.replace(/\s*\(.*?\)\s*/g, " ").trim();
+  const f = [
+    ["MIT Sloan alumni", linkedinSearch(co, '"MIT Sloan"')],
+    ["University recruiting", linkedinSearch(co, "university recruiting")],
+    ["MBA recruiting", linkedinSearch(co, "MBA recruiting")],
+    ["Partnerships & events", linkedinSearch(co, "partnerships events")],
+    ["Boston / Cambridge", linkedinSearch(co, "Boston")],
+  ];
+  if (["AI & Data", "Big Tech & Cloud"].includes(r.sector)) f.push(["Startups & devrel", linkedinSearch(co, "startups developer relations")]);
+  if (r.sector === "Venture Capital") f.push(["Platform team", linkedinSearch(co, "platform community")]);
+  return f.map(([l, u]) => `<a href="${esc(u)}" target="_blank" rel="noopener">${esc(l)} ${ICON_EXT}</a>`).join("");
+}
+
+function renderSheet() {
+  const r = items.get(openId); if (!r) return;
+  const ro = mode === "readonly" ? " disabled" : "";
+  const active = document.activeElement, activeId = active && active.id;
+  const sheet = $("#sheet");
+  const scroll = sheet.querySelector(".sheet-b")?.scrollTop || 0;
+  sheet.innerHTML = `
+  <div class="sheet-h">
+    <div class="t">
+      <div class="eyebrow">${esc(r.sector || "Company")}${r.warm ? ` · <b>${esc(r.warm)}</b>` : ""}</div>
+      <label class="sr" for="e-name">Company name</label>
+      <input class="name" id="e-name" data-f="name" value="${esc(r.name)}"${ro}>
+    </div>
+    <button class="btn ghost" type="button" data-act="close" aria-label="Close"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m4 4 8 8M12 4l-8 8"/></svg></button>
+  </div>
+  <div class="sheet-b">
+    ${r.unverified ? `<div class="warnbox"><b>Research incomplete.</b> This company's fit is a starting hypothesis with no verified sources or named people yet. Check it before outreach.</div>` : ""}
+    <div class="grid2">
+      <label class="fl"><span>Stage</span><select class="f" id="e-status" data-f="status"${ro}>${opt(STAGES.map(s => [s.id, s.label]), r.status)}</select></label>
+      <label class="fl"><span class="with-link">Priority${changedFrom(r, "priority") !== null ? ` <span class="sugg">Suggested: ${esc(changedFrom(r, "priority") || "none")}</span>` : ""}</span><select class="f" id="e-priority" data-f="priority"${ro}>${opt([["A", "A · Go first"], ["B", "B · Strong fit"], ["C", "C · Stretch"]], r.priority)}</select></label>
+      <label class="fl"><span>Owner</span><input class="f" id="e-owner" data-f="owner" list="owners-dl" placeholder="Teammate's name" value="${esc(r.owner)}"${ro}></label>
+      <div class="fl"><span class="with-link"><label for="e-tier">Tier${changedFrom(r, "tier") !== null ? ` <span class="sugg">Suggested: ${esc(changedFrom(r, "tier") || "none")}</span>` : ""}</label><button class="linkish tier-link" type="button" data-act="tiers">Compare tiers</button></span><select class="f" id="e-tier" data-f="tier"${ro}>${opt(TIERS.map(t => [t, tierLabel(t)]), r.tier)}</select></div>
+      <label class="fl"><span>Ask ($)</span><input class="f num" id="e-ask" data-f="ask" type="number" min="0" step="500" inputmode="numeric" value="${esc(r.ask ?? "")}"${ro}></label>
+      <label class="fl"><span>Committed ($)</span><input class="f num" id="e-committed" data-f="committed" type="number" min="0" step="500" inputmode="numeric" value="${esc(r.committed ?? "")}"${ro}></label>
+      <label class="fl full"><span>Next step</span><input class="f" id="e-nextStep" data-f="nextStep" placeholder="e.g. Send deck to recruiting lead" value="${esc(r.nextStep)}"${ro}></label>
+      <label class="fl"><span>Next-step date</span><input class="f" id="e-nextDate" data-f="nextDate" type="date" value="${esc(r.nextDate)}"${ro}></label>
+      <label class="fl"><span>Last contact</span><input class="f" id="e-lastContact" data-f="lastContact" type="date" value="${esc(r.lastContact)}"${ro}></label>
+      <label class="fl full"><span>Product</span><input class="f" id="e-product" data-f="product" placeholder="What they sell" value="${esc(r.product)}"${ro}></label>
+      <label class="fl full"><span>Tags</span><input class="f" id="e-tags" data-f="tags" placeholder="e.g. Boston HQ, MIT Alumni Founder, AI-native" value="${esc(r.tags)}"${ro}></label>
+      <label class="fl"><span>Lead warmth</span><input class="f" id="e-leadWarmth" data-f="leadWarmth" placeholder="Who knows them, how warm" value="${esc(r.leadWarmth)}"${ro}></label>
+      <label class="fl"><span>Speaking opportunity</span><input class="f" id="e-speaking" data-f="speaking" placeholder="Speaker, panel, workshop…" value="${esc(r.speaking)}"${ro}></label>
+      <label class="check full"><input type="checkbox" id="e-vetted" data-f="vetted"${r.vetted ? " checked" : ""}${ro}> Vetted by the Student Life Office</label>
+    </div>
+
+    <section class="sec lastyear">
+      <div class="sec-h"><h3>2026 Summit</h3><small>From last year's tracker</small></div>
+      <div class="grid2">
+        <label class="fl"><span>2026 status</span><select class="f" id="e-s26Status" data-f="s26Status"${ro}>${opt(S26.map(x => [x.id, x.label || x.id]), r.s26Status || "")}</select></label>
+        <label class="fl"><span>2026 tier${LEGACY_TIER[r.s26Tier] ? ` (now ${esc(LEGACY_TIER[r.s26Tier])})` : ""}</span><input class="f" id="e-s26Tier" data-f="s26Tier" list="tiers-dl" value="${esc(r.s26Tier)}"${ro}></label>
+        <label class="fl"><span>2026 amount ($)</span><input class="f num" id="e-s26Amount" data-f="s26Amount" type="number" min="0" step="500" value="${esc(r.s26Amount ?? "")}"${ro}></label>
+        <label class="fl full"><span>Relationship notes</span><textarea class="f" id="e-s26Warmth" data-f="s26Warmth" rows="2"${ro}>${esc(r.s26Warmth)}</textarea></label>
+        <label class="fl full"><span>2026 notes</span><textarea class="f" id="e-s26Notes" data-f="s26Notes" rows="2"${ro}>${esc(r.s26Notes)}</textarea></label>
+      </div>
+      <datalist id="tiers-dl">${TIERS.filter(Boolean).map(t => `<option value="${esc(t)}">`).join("")}</datalist>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h"><h3>Contacts</h3><small>${(r.contacts || []).length} saved</small></div>
+      <div class="people" id="people">${renderPeople(r, ro)}</div>
+      <div class="lbl-sm label">Find more on LinkedIn</div>
+      <div class="finders">${finders(r)}</div>
+      ${r.channel ? `<div class="fact"><span>Public channel</span><div>${linkify(r.channel)}</div></div>` : ""}
+    </section>
+
+    <section class="sec">
+      <div class="sec-h"><h3>Why they'd sponsor</h3><small>${r.sources?.length ? r.sources.length + " sources" : "No sources yet"}</small></div>
+      <div class="facts">
+        ${r.fit ? `<div class="fact"><span>Fit</span><div>${esc(r.fit)}</div></div>` : ""}
+        ${r.mitTies ? `<div class="fact"><span>MIT ties</span><div>${esc(r.mitTies)}</div></div>` : ""}
+        ${r.programs ? `<div class="fact"><span>Programs</span><div>${linkify(r.programs)}</div></div>` : ""}
+        ${r.sources?.length ? `<div class="fact"><span>Sources</span><div><ol class="srcs">${r.sources.map(u => `<li>${safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\/(www\.)?/, "").slice(0, 80))}</a>` : esc(u)}</li>`).join("")}</ol></div></div>` : ""}
+      </div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h"><h3>Outreach draft</h3><small>Edit before sending</small></div>
+      <div class="grid2">
+        <label class="fl"><span>To</span><select class="f" id="d-to">${opt([["", "Choose a contact"], ...(r.contacts || []).map(c => [c.name, c.name])], draftContact(r)?.name || "")}</select></label>
+        <label class="fl"><span>Your name</span><input class="f" id="d-me" placeholder="Signs the email" value="${esc(prefs.me || "")}"></label>
+      </div>
+      <label class="fl"><span class="sr">Draft</span><textarea class="f draft" id="d-text" spellcheck="true">${esc(drafts[openId] ?? draftEmail(r))}</textarea></label>
+      <div class="row-btns"><button class="btn sm" type="button" data-act="regen">Rebuild draft</button><button class="btn sm primary" type="button" data-act="copy-draft">Copy email</button></div>
+    </section>
+
+    <section class="sec">
+      <div class="sec-h"><h3>Notes</h3><small>Calls, objections, what they asked for</small></div>
+      <label class="fl"><span class="sr">Notes</span><textarea class="f" id="e-notes" data-f="notes" rows="5" placeholder="e.g. Oct 14: call with recruiting lead. Budget decided in November."${ro}>${esc(r.notes)}</textarea></label>
+    </section>
+
+    <div class="row-btns" style="justify-content:space-between;align-items:center">
+      <span class="stamp" id="stamp"></span>
+      ${mode === "readonly" ? "" : `<button class="btn sm danger" type="button" data-act="ask-delete">Remove company</button>`}
+    </div>
+    <div id="del-confirm" hidden class="warnbox">Remove ${esc(r.name)} and its contacts for everyone? <div class="row-btns" style="margin-top:8px"><button class="btn sm" type="button" data-act="cancel-delete">Keep</button><button class="btn sm primary" type="button" data-act="delete">Remove</button></div></div>
+  </div>`;
+  renderStamp();
+  const b = sheet.querySelector(".sheet-b"); if (b) b.scrollTop = scroll;
+  if (activeId) { const el = document.getElementById(activeId); if (el) { el.focus(); if (el.setSelectionRange && active.selectionStart != null && el.type !== "number" && el.type !== "date") { try { el.setSelectionRange(active.selectionStart, active.selectionEnd); } catch {} } } }
+}
+function renderStamp() {
+  const r = items.get(openId), el = $("#stamp"); if (!r || !el) return;
+  if (!r.updatedAt) { el.textContent = ""; return; }
+  const when = new Date(r.updatedAt).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  const who = r.updatedBy && names[r.updatedBy] ? " by " + names[r.updatedBy] : "";
+  el.textContent = "Last updated " + when + who;
+}
+function linkify(t) {
+  /* One pass, so an address inside a URL isn't wrapped a second time. Input is escaped first. */
+  return esc(t).replace(/(https?:\/\/[^\s;,)<]+)|\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,})\b/gi, (m, u, e) =>
+    u ? `<a href="${u}" target="_blank" rel="noopener">${u.replace(/^https?:\/\/(www\.)?/, "")}</a>` : `<span class="mono" style="user-select:all">${e}</span>`);
+}
+function renderPeople(r, ro) {
+  const cs = r.contacts || [];
+  let html = cs.map((c, i) => editingContact === i ? contactForm(c, i) : `
+    <div class="person">
+      <div class="person-h"><div><div class="n">${esc(c.name)}</div><div class="ti">${esc(c.title)}</div></div>
+        ${ro ? "" : `<button class="btn sm ghost" type="button" data-edit-contact="${i}">Edit</button>`}</div>
+      ${c.why ? `<div class="why">${esc(c.why)}</div>` : ""}
+      ${c.email ? `<div class="em">${esc(c.email)}</div>` : ""}
+      <div class="links">
+        ${safeUrl(c.linkedin) ? `<a href="${esc(safeUrl(c.linkedin))}" target="_blank" rel="noopener">LinkedIn</a>` : `<a href="${esc(linkedinSearch(r.name.replace(/\s*\(.*?\)\s*/g, " "), c.name))}" target="_blank" rel="noopener">Find on LinkedIn</a>`}
+        ${safeUrl(c.source) ? `<a href="${esc(safeUrl(c.source))}" target="_blank" rel="noopener">Source</a>` : ""}
+        ${c.email ? `<button class="linkish" type="button" data-copy="${esc(c.email)}">Copy email</button>` : ""}
+      </div>
+    </div>`).join("");
+  if (editingContact === "new") html += contactForm({}, "new");
+  else if (!ro) html += `<div><button class="btn sm" type="button" data-act="add-contact">Add a contact</button></div>`;
+  if (!cs.length && editingContact !== "new") html = `<div class="empty-note">No contacts yet. Use the LinkedIn searches below to find the right person, then add them here.</div>` + html;
+  return html;
+}
+function contactForm(c, i) {
+  const k = i === "new" ? "n" : i;
+  return `<div class="person-edit" data-cform="${i}">
+    <div class="grid2">
+      <label class="fl"><span>Name</span><input class="f" id="c-name-${k}" value="${esc(c.name)}" placeholder="Full name"></label>
+      <label class="fl"><span>Title</span><input class="f" id="c-title-${k}" value="${esc(c.title)}" placeholder="Role at the company"></label>
+      <label class="fl"><span>Email</span><input class="f" id="c-email-${k}" type="email" value="${esc(c.email)}" placeholder="Only if confirmed"></label>
+      <label class="fl"><span>LinkedIn URL</span><input class="f" id="c-linkedin-${k}" type="url" value="${esc(c.linkedin)}" placeholder="https://linkedin.com/in/…"></label>
+      <label class="fl full"><span>Why this person</span><input class="f" id="c-why-${k}" value="${esc(c.why)}" placeholder="e.g. Sloan alum, runs MBA recruiting"></label>
+      <label class="fl full"><span>Source</span><input class="f" id="c-source-${k}" type="url" value="${esc(c.source)}" placeholder="Where you confirmed their role"></label>
+    </div>
+    <div class="row-btns">
+      ${i === "new" ? "" : `<button class="btn sm danger" type="button" data-del-contact="${i}">Remove</button>`}
+      <button class="btn sm" type="button" data-act="cancel-contact">Cancel</button>
+      <button class="btn sm primary" type="button" data-save-contact="${i}">Save person</button>
+    </div>
+  </div>`;
+}
+
+/* ——— outreach draft ——— */
+/* The chosen recipient is remembered by name, so removing another person doesn't switch it. */
+function draftContact(r) {
+  const cs = r.contacts || [], want = prefs.draftTo?.[openId];
+  if (want === "") return null;
+  return cs.find(c => c.name === want) || cs[0] || null;
+}
+function draftEmail(r) {
+  const c = draftContact(r);
+  const first = c && c.name ? c.name.split(/\s+/)[0] : "there";
+  const me = prefs.me || "[Your name]";
+  const co = r.name.replace(/\s*\(.*?\)\s*/g, " ").trim();
+  const angle = r.angle || "put your team in front of MIT's next generation of product, strategy and AI leaders";
+  const speakers = [["cerebras", "Andrew Feldman (Cerebras)"], ["hubspot", "HubSpot co-founder Dharmesh Shah"], ["google", "Carol Walport of Google DeepMind"]]
+    .filter(([k]) => !co.toLowerCase().includes(k)).slice(0, 2).map(x => x[1]).join(" and ");
+  const thanks = r.s26Status === "Confirmed" ? ` Thank you again for sponsoring it.` : /2026/.test(r.warm || "") ? ` Thank you again for being part of it.` : "";
+  return `Subject: ${co} × MIT Sloan Tech Summit 2027
+
+Hi ${first},
+
+I'm ${me}, an MBA student at MIT Sloan and part of the team organizing the 2027 MIT Sloan Tech Summit, the largest student-run conference at MIT.
+
+Our 2026 edition, "Bottlenecks to Breakthroughs: Building AI at Scale," brought together MIT graduate students, founders and operators, with speakers including ${speakers}, plus an AI hackathon and a networking night with 677 registrants.${thanks}
+
+I'm reaching out because a partnership would let ${co} ${angle}.
+
+Packages run from $2,000 to $25,000, covering recruiting tables and resume book access up to keynote and panel slots with marquee branding${r.tier && TIER_BY[r.tier] ? `. Our ${r.tier} package ($${TIER_BY[r.tier].price.toLocaleString("en-US")}) could be a natural starting point` : ""}. I'd be glad to share the deck and shape a package around what matters most to your team.
+
+Would you have 20 minutes in the next two weeks?
+
+Best,
+${me}
+MBA Candidate, MIT Sloan School of Management`;
+}
+
+/* ——— new company modal ——— */
+function openAddModal() {
+  const m = $("#modal");
+  m.innerHTML = `<div class="scrim" data-act="close-modal" style="position:absolute"></div>
+  <form class="modal-card" id="add-form" novalidate>
+    <h3>Add a company</h3>
+    <p>You can fill in contacts and research after it's added.</p>
+    <label class="fl"><span>Company name</span><input class="f" id="n-name" required placeholder="e.g. Datadog" autocomplete="off"></label>
+    <div class="grid2">
+      <label class="fl"><span>Sector</span><select class="f" id="n-sector">${opt(SECTORS, "")}</select></label>
+      <label class="fl"><span>Priority</span><select class="f" id="n-prio">${opt([["A", "A · Go first"], ["B", "B · Strong fit"], ["C", "C · Stretch"]], "B")}</select></label>
+    </div>
+    <label class="fl"><span>Owner</span><input class="f" id="n-owner" list="owners-dl" placeholder="Teammate's name"></label>
+    <div id="n-err" class="warnbox" hidden></div>
+    <div class="row-btns"><button class="btn" type="button" data-act="close-modal">Cancel</button><button class="btn primary" type="submit">Add company</button></div>
+  </form>`;
+  m.hidden = false; setTimeout(() => $("#n-name").focus(), 0);
+}
+function openTiers() {
+  const cell = v => v === true ? '<td class="yes" aria-label="Included">✓</td>' : v === false || v === "" ? '<td class="no" aria-label="Not included">—</td>' : `<td>${esc(v)}</td>`;
+  let grp = "", body = "";
+  BENEFITS.forEach(([g, label, vals]) => {
+    if (g !== grp) { grp = g; body += `<tr class="grp"><th colspan="5" scope="colgroup">${esc(g)}</th></tr>`; }
+    body += `<tr><th scope="row">${esc(label)}</th>${vals.map(cell).join("")}</tr>`;
+  });
+  const m = $("#modal");
+  m.innerHTML = `<div class="scrim" data-act="close-modal" style="position:absolute"></div>
+  <div class="modal-card wide" role="dialog" aria-labelledby="tiers-h">
+    <h3 id="tiers-h">Sponsorship tiers</h3>
+    <p>This is the 2026 ladder; the 2027 tiers aren't final yet. In 2026, Platinum was called Petabyte and Gold was called Terabyte.</p>
+    <div class="tiers-wrap"><table class="tiers">
+      <thead><tr><th scope="col" style="text-align:left">Benefit</th>${TIER_INFO.map(t => `<th scope="col">${esc(t.id)}<small>$${t.price.toLocaleString("en-US")}</small></th>`).join("")}</tr></thead>
+      <tbody>${body}</tbody>
+    </table></div>
+    <div class="row-btns"><button class="btn primary" type="button" data-act="close-modal">Done</button></div>
+  </div>`;
+  m.hidden = false;
+}
+function openSettings() {
+  const m = $("#modal");
+  m.innerHTML = `<div class="scrim" data-act="close-modal" style="position:absolute"></div>
+  <form class="modal-card" id="settings-form" novalidate>
+    <h3>Settings</h3>
+    <label class="fl"><span>Sponsorship goal ($)</span><input class="f num" id="s-goal" type="number" min="0" step="1000" value="${esc(settings.goal || "")}" placeholder="e.g. 150000"${mode === "readonly" ? " disabled" : ""}></label>
+    <p>The goal is shared with everyone who uses this tracker${mode === "local" ? " in this browser" : ""}.</p>
+    <label class="fl"><span>Your name, for email drafts</span><input class="f" id="s-me" value="${esc(prefs.me || "")}" placeholder="First Last"></label>
+    <p>Your name is saved only in this browser.</p>
+    <div class="sec-h"><h3>Stage colors</h3><button class="linkish" type="button" data-act="reset-colors"${mode === "readonly" ? " hidden" : ""}>Reset to defaults</button></div>
+    <div class="swatches">${VIEW_STAGES.map(s => `<label class="swatch"><input type="color" id="s-col-${s.id}" data-stage-color="${s.id}" value="${esc(toHex(getComputedStyle(document.documentElement).getPropertyValue(`--st-${s.id}`)))}"${mode === "readonly" ? " disabled" : ""}><span>${esc(s.label)}</span></label>`).join("")}</div>
+    <p>Colors are shared with everyone who uses this tracker${mode === "local" ? " in this browser" : ""}.</p>
+    <div class="row-btns"><button class="btn" type="button" data-act="close-modal">Cancel</button><button class="btn primary" type="submit">Save</button></div>
+  </form>`;
+  m.hidden = false;
+}
+function closeModal() { $("#modal").hidden = true; $("#modal").innerHTML = ""; applyStageColors(); }
+/* Stage colors: store only the team's overrides as #rrggbb; everything else keeps the theme default. */
+const HEX = /^#[0-9a-f]{6}$/i;
+function applyStageColors(colors = settings.stageColors || {}) {
+  const root = document.documentElement.style;
+  VIEW_STAGES.forEach(s => { const c = colors[s.id]; if (c && HEX.test(c)) root.setProperty(`--st-${s.id}`, c); else root.removeProperty(`--st-${s.id}`); });
+}
+function toHex(color) {
+  const cx = document.createElement("canvas").getContext("2d"); cx.fillStyle = "#000"; cx.fillStyle = color.trim(); const v = cx.fillStyle;
+  if (HEX.test(v)) return v;
+  const m = v.match(/\d+(\.\d+)?/g); return m ? "#" + m.slice(0, 3).map(n => Math.round(+n).toString(16).padStart(2, "0")).join("") : "#888888";
+}
+function stageDefault(id) {
+  const root = document.documentElement.style, cur = root.getPropertyValue(`--st-${id}`);
+  root.removeProperty(`--st-${id}`); const v = toHex(getComputedStyle(document.documentElement).getPropertyValue(`--st-${id}`));
+  if (cur) root.setProperty(`--st-${id}`, cur); return v;
+}
+
+/* ——— export / import ——— */
+function exportRows() { return [...items.entries()].map(([id, r]) => ({ id, ...r })).sort((a, b) => a.name.localeCompare(b.name)); }
+/* ——— exports in the team's 2026 tracker format ———
+   Same 16 columns, header text and value vocabulary as "MIT Sloan Tech Summit External Sponsorship Tracker". */
+const SHEET_STATUS = { not_started: "todo", contacted: "Outreach Sent", talking: "Received Interest", proposal: "Negotiation", committed: "Confirmed", declined: "Declined", hold: "On hold" };
+const SHEET_STATUS_LIST = ["Outreach Sent", "Ghosted", "Declined", "Received Interest", "Negotiation", "Confirmed", "todo", "On hold"];
+const contactLines = r => (r.contacts || []).map(c => [c.name, c.title].filter(Boolean).join(", ")).join("\n");
+const emailList = r => (r.contacts || []).map(c => c.email).filter(Boolean).join(", ");
+const notesWithNext = r => [r.nextStep || r.nextDate ? `Next step: ${r.nextStep || "Follow up"}${r.nextDate ? ` (${fmtSheetDate(r.nextDate)})` : ""}` : "", r.notes].filter(Boolean).join("\n");
+const fmtSheetDate = s => { const d = parseDate(s); return d ? `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}` : ""; };
+/* Excel stores dates as UTC; build the calendar day in UTC so no timezone shifts it. */
+const xlDate = s => { const d = parseDate(s); return d ? new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) : null; };
+const num = v => (v === null || v === undefined || v === "" || isNaN(Number(v))) ? null : Number(v);
+/* [header, value, width]; widths copied from the 2026 sheet. */
+const SHEET_COLS = [
+  ["Company", r => r.name, 22.63],
+  ["Status", r => SHEET_STATUS[r.status] || r.status, 18.63],
+  ["Last Outreach", r => xlDate(r.lastContact), 19.25],
+  ["Product", r => r.product, 29.25],
+  ["Tags", r => r.tags, 31.13],
+  ["Email", r => emailList(r), 39.5],
+  ["Potential Contacts", r => contactLines(r), 39.88],
+  ["Lead Warmth", r => r.leadWarmth || r.warm, 12.63],
+  ["Speaking Opportunity", r => r.speaking, 21.88],
+  ["Notes", r => notesWithNext(r), 12.63],
+  ["Owner", r => r.owner, 10.38],
+  ["- LAST YEAR -\nStatus", r => r.s26Status, 18.63],
+  ["- LAST YEAR -\nSponsor Tier", r => r.s26Tier, 16.88],
+  ["$", r => num(r.s26Amount), 9.75],
+  ["- LAST YEAR -\nLead Warmth", r => r.s26Warmth, 31],
+  ["-LAST YEAR -\nNotes", r => r.s26Notes, 33.63],
+];
+/* Extra tracker fields the 2026 sheet has no column for, on a second sheet. */
+const DETAIL_COLS = [
+  ["Company", r => r.name, 26], ["Priority", r => r.priority, 9], ["Suggested priority", r => r.suggestedPriority ?? r.priority, 11],
+  ["2027 tier", r => r.tier, 16], ["Suggested tier", r => r.suggestedTier ?? r.tier, 16], ["Ask ($)", r => num(r.ask), 11], ["Committed ($)", r => num(r.committed), 13],
+  ["Next step", r => r.nextStep, 30], ["Next-step date", r => xlDate(r.nextDate), 13], ["SLO vetted", r => r.vetted ? "Yes" : "No", 10],
+  ["Sector", r => r.sector, 20], ["Contact email on file", r => hasEmail(r) ? "Yes" : "No", 12], ["Warm signal", r => r.warm, 26],
+  ["Why they'd sponsor", r => r.fit, 50], ["MIT ties", r => r.mitTies, 50], ["Programs", r => r.programs, 40], ["Public channel", r => r.channel, 30],
+  ["Sources", r => (r.sources || []).join("\n"), 44], ["Research incomplete", r => r.unverified ? "Yes" : "", 11],
+  ["Last updated", r => r.updatedAt ? new Date(r.updatedAt).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "", 22],
+];
+function toCSV() {
+  /* Cells that start like a formula are prefixed so spreadsheets show them as text. */
+  const cell = v => /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  const q = v => { let s = v == null ? "" : v instanceof Date ? `${v.getUTCMonth() + 1}/${v.getUTCDate()}/${v.getUTCFullYear()}` : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return cell(s); };
+  const rows = exportRows().map(r => SHEET_COLS.map(c => q(c[1](r))).join(","));
+  return "\uFEFF" + [SHEET_COLS.map(c => cell(c[0])).join(","), ...rows].join("\r\n");
+}
+async function offerFile(filename, text, type) {
+  if (downloads) {
+    try { await downloads.save({ filename, data: text }); return; }
+    catch (e) { if (e && e.code === "declined") return; if (e && e.code === "rate_limited") { toast("A save is already waiting for your answer."); return; } }
+  }
+  if (mode === "local" && !window.claude) {
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = filename;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500); return;
+  }
+  if (typeof text !== "string") { toast("Downloads aren't available in this view. Open the tracker in a browser to export."); return; }
+  try { await navigator.clipboard.writeText(text); toast("Download isn't available here, so the file was copied to your clipboard."); }
+  catch { toast("Couldn't save or copy the file in this view."); }
+}
+/* ExcelJS is loaded only when someone exports (it's ~900 KB). */
+let excelLib = null;
+function loadExcelJS() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (!excelLib) excelLib = new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+    s.onload = () => window.ExcelJS ? res(window.ExcelJS) : rej(new Error("ExcelJS missing"));
+    s.onerror = () => { excelLib = null; rej(new Error("ExcelJS failed to load")); };
+    document.head.appendChild(s);
+  });
+  return excelLib;
+}
+const XL_GREEN = "FF356854", XL_STRIPE = "FFF6F8F9", XL_FONT = { name: "Arial", size: 10 };
+/* Header, stripes, fonts and number formats follow the 2026 sheet. */
+function styleSheet(ws, cols, rowCount, { freezeCols = 1, money = [], dates = [], links = [] } = {}) {
+  ws.columns = cols.map(c => ({ width: c[2] }));
+  ws.views = [{ state: "frozen", xSplit: freezeCols, ySplit: 1 }];
+  const head = ws.getRow(1); head.height = 30;
+  head.eachCell(cell => {
+    cell.font = { ...XL_FONT, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: XL_GREEN } };
+    cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+  });
+  for (let i = 2; i <= rowCount + 1; i++) {
+    const row = ws.getRow(i); row.height = 22.5;
+    for (let c = 1; c <= cols.length; c++) {
+      const cell = row.getCell(c);
+      cell.font = links.includes(c) && cell.value && cell.value.hyperlink ? { ...XL_FONT, underline: true, color: { argb: "FF0000FF" } } : { ...XL_FONT };
+      cell.alignment = { vertical: "middle", wrapText: true, ...(money.includes(c) ? { horizontal: "left" } : {}) };
+      if (money.includes(c)) cell.numFmt = '"$"#,##0';
+      if (dates.includes(c)) cell.numFmt = "M/d/yyyy";
+      if (i % 2 === 1) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: XL_STRIPE } };
+      cell.border = { bottom: { style: "thin", color: { argb: "FFE3E6E8" } } };
+    }
+  }
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(1, rowCount + 1), column: cols.length } };
+}
+async function exportExcel() {
+  let ExcelJS;
+  try { ExcelJS = await loadExcelJS(); } catch { toast("The Excel library didn't load. Check your connection, or use Export CSV."); return; }
+  const rows = exportRows();
+  const wb = new ExcelJS.Workbook(); wb.creator = "STS 2027 Sponsor Pipeline"; wb.created = new Date();
+
+  const ws = wb.addWorksheet("Sponsorship Outreach List");
+  ws.addRow(SHEET_COLS.map(c => c[0]));
+  rows.forEach(r => {
+    const vals = SHEET_COLS.map(c => c[1](r) ?? "");
+    const li = (r.contacts || []).find(c => safeUrl(c.linkedin));
+    if (li && vals[6]) vals[6] = { text: vals[6], hyperlink: safeUrl(li.linkedin) };
+    ws.addRow(vals);
+  });
+  styleSheet(ws, SHEET_COLS, rows.length, { freezeCols: 3, money: [14], dates: [3], links: [7] });
+  const statusList = { type: "list", allowBlank: true, formulae: [`"${SHEET_STATUS_LIST.join(",")}"`] };
+  const last = Math.max(2, rows.length + 1);
+  ws.dataValidations.add(`B2:B${last}`, statusList); ws.dataValidations.add(`L2:L${last}`, statusList);
+
+  const wd = wb.addWorksheet("Tracker details");
+  wd.addRow(DETAIL_COLS.map(c => c[0]));
+  rows.forEach(r => wd.addRow(DETAIL_COLS.map(c => c[1](r) ?? "")));
+  styleSheet(wd, DETAIL_COLS, rows.length, { money: [6, 7], dates: [9] });
+
+  const PEOPLE = [["Company", 0, 26], ["Name", 0, 26], ["Title", 0, 36], ["Email", 0, 30], ["LinkedIn", 0, 40], ["Why this person", 0, 44], ["Source", 0, 44], ["Status", 0, 16], ["Owner", 0, 14]];
+  const wc = wb.addWorksheet("Contacts");
+  wc.addRow(PEOPLE.map(c => c[0]));
+  let n = 0;
+  rows.forEach(r => (r.contacts || []).forEach(c => { n++; wc.addRow([r.name, c.name, c.title, c.email, safeUrl(c.linkedin) ? { text: c.linkedin, hyperlink: safeUrl(c.linkedin) } : "", c.why, safeUrl(c.source) ? { text: c.source, hyperlink: safeUrl(c.source) } : c.source || "", SHEET_STATUS[r.status] || r.status, r.owner]); }));
+  styleSheet(wc, PEOPLE, n, { links: [5, 7] });
+
+  const TCOLS = [["Benefit", 0, 44], ...TIER_INFO.map(t => [`${t.id} ($${t.price.toLocaleString("en-US")})`, 0, 16])];
+  const wt = wb.addWorksheet("Tiers");
+  wt.addRow(TCOLS.map(c => c[0]));
+  BENEFITS.forEach(([g, l, v]) => wt.addRow([`${g}: ${l}`, ...v.map(x => x === true ? "Yes" : x === false ? "No" : x)]));
+  styleSheet(wt, TCOLS, BENEFITS.length);
+
+  const buf = await wb.xlsx.writeBuffer();
+  const stamp = new Date().toISOString().slice(0, 10);
+  await offerFile(`MIT_Sloan_Tech_Summit_27_External_Sponsorship_Tracker_${stamp}.xlsx`, new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+}
+async function importJSON(file) {
+  if (mode === "readonly") { toast("You can view this tracker but not edit it, so importing is off."); return; }
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { toast("That file isn't valid JSON. Export one from this tracker and try again."); return; }
+  if (!Array.isArray(data)) data = data.targets || [];
+  let added = 0, updated = 0;
+  for (const raw of data) {
+    if (!raw || !raw.name) continue;
+    const id = raw.id || slug(raw.name);
+    const { id: _, ...rec } = raw;
+    const cur = items.get(id);
+    if (cur && cur.updatedAt && (!rec.updatedAt || cur.updatedAt >= rec.updatedAt)) continue;
+    const full = normalize({ ...(cur || {}), ...rec });
+    items.set(id, full); cur ? updated++ : added++;
+    if (mode === "shared") { try { await db.doc("targets/" + id).set(full); } catch (e) { handleWriteError(e); break; } }
+  }
+  if (mode === "local") persistLocal();
+  render(); toast(`Imported: ${added} added, ${updated} updated`);
+}
+
+/* ——— events ——— */
+document.addEventListener("click", async e => {
+  const t = e.target.closest("[data-act],[data-open],[data-sort],[data-stage],[data-edit-contact],[data-save-contact],[data-del-contact],[data-copy]");
+  const menu = $("#menu-data");
+  if (!e.target.closest(".menu")) { menu.hidden = true; $("#btn-data").setAttribute("aria-expanded", "false"); }
+  if (!t) return;
+  if (t.dataset.open && !e.target.closest("a, .pick-wrap")) return openSheet(t.dataset.open);
+  if (t.dataset.sort) { sort = sort.key === t.dataset.sort ? { key: sort.key, dir: -sort.dir } : { key: t.dataset.sort, dir: 1 }; savePrefs(); return renderMain(); }
+  if (t.dataset.stage) { filters.stage = filters.stage === t.dataset.stage ? "" : t.dataset.stage; renderSummary(); return renderMain(); }
+  if (t.dataset.editContact != null) { editingContact = Number(t.dataset.editContact); return rerenderPeople(); }
+  if (t.dataset.copy) return copyText(t.dataset.copy, "Email copied");
+  if (t.dataset.delContact != null) {
+    const r = items.get(openId); const cs = [...(r.contacts || [])]; cs.splice(Number(t.dataset.delContact), 1);
+    editingContact = null; patchItem(openId, { contacts: cs }, { immediate: true }); return renderSheet();
+  }
+  if (t.dataset.saveContact != null) return saveContact(t.dataset.saveContact);
+  const act = t.dataset.act;
+  menu.hidden = true;
+  switch (act) {
+    case "add": return openAddModal();
+    case "close": return closeSheet();
+    case "close-modal": return closeModal();
+    case "clear": filters = { q: "", sector: "", prio: "", owner: "", stage: "", s26: "__all" }; $("#q").value = ""; return render();
+    case "add-contact": editingContact = "new"; return rerenderPeople();
+    case "cancel-contact": editingContact = null; return rerenderPeople();
+    case "ask-delete": $("#del-confirm").hidden = false; return;
+    case "cancel-delete": $("#del-confirm").hidden = true; return;
+    case "delete": return deleteItem(openId);
+    case "regen": delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); return;
+    case "copy-draft": return copyText($("#d-text").value, "Email copied. Paste it into your mail app.");
+    case "xlsx": return exportExcel();
+    case "csv": return offerFile(`MIT_Sloan_Tech_Summit_27_External_Sponsorship_Tracker_${new Date().toISOString().slice(0, 10)}.csv`, toCSV(), "text/csv");
+    case "json": return offerFile("sts-2027-sponsors.json", JSON.stringify(exportRows(), null, 2), "application/json");
+    case "settings": return openSettings();
+    case "tiers": return openTiers();
+    case "reset-colors": document.querySelectorAll("[data-stage-color]").forEach(el => { const id = el.dataset.stageColor; document.documentElement.style.removeProperty(`--st-${id}`); el.value = stageDefault(id); }); return renderSummary();
+    case "reset":
+      try { localStorage.removeItem(LS_DATA); } catch {}
+      items = new Map((await loadRepoData()).map(r => [r.id, normalize(r)])); render(); return toast("Reset to the data in the repo");
+  }
+});
+$("#btn-add").addEventListener("click", openAddModal);
+$("#main").addEventListener("change", e => {
+  const el = e.target.closest("[data-pick]"); if (!el || mode === "readonly") return;
+  const id = el.dataset.id, r = items.get(id); if (!r) return;
+  const f = el.dataset.pick, v = el.value;
+  if ((r[f] || "") === v) return;
+  patchItem(id, pickPatch(r, f, v), { immediate: true });
+  toast(`${r.name}: ${f === "priority" ? "priority " + v : v ? tierLabel(v) : "no tier"}`);
+});
+$("#main").addEventListener("keydown", e => { if (e.target.matches("[data-pick]")) e.stopPropagation(); });
+$("#btn-data").addEventListener("click", e => { e.stopPropagation(); const m = $("#menu-data"); m.hidden = !m.hidden; e.currentTarget.setAttribute("aria-expanded", String(!m.hidden)); });
+$("#scrim").addEventListener("click", closeSheet);
+$("#v-list").addEventListener("click", () => { view = "list"; savePrefs(); renderMain(); });
+$("#v-board").addEventListener("click", () => { view = "board"; savePrefs(); renderMain(); });
+$("#q").addEventListener("input", e => { filters.q = e.target.value; renderMain(); });
+$("#f-sector").addEventListener("change", e => { filters.sector = e.target.value; renderMain(); });
+$("#f-prio").addEventListener("change", e => { filters.prio = e.target.value; renderMain(); });
+$("#f-owner").addEventListener("change", e => { filters.owner = e.target.value; renderMain(); });
+$("#f-s26").addEventListener("change", e => { filters.s26 = e.target.value; renderMain(); });
+$("#file-import").addEventListener("change", e => { const f = e.target.files[0]; if (f) importJSON(f); e.target.value = ""; $("#menu-data").hidden = true; });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { if (!$("#modal").hidden) closeModal(); else if (openId) closeSheet(); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("[data-open].row, [data-open].card")) { e.preventDefault(); openSheet(e.target.dataset.open); }
+});
+
+/* sheet field edits */
+function fieldValue(el) {
+  if (el.type === "checkbox") return el.checked;
+  if (el.type === "number") return el.value === "" || isNaN(Number(el.value)) ? null : Math.max(0, Number(el.value));
+  if (el.dataset.f === "owner") return el.value.trim();
+  return el.value;
+}
+$("#sheet").addEventListener("input", e => {
+  const el = e.target;
+  if (el.dataset.f && openId) {
+    const f = el.dataset.f, v = fieldValue(el);
+    if (f === "name" && !String(v).trim()) return;
+    const patch = f === "priority" || f === "tier" ? pickPatch({ id: openId, ...items.get(openId) }, f, v) : { [f]: v };
+    if ("ask" in patch && f === "tier") { const a = $("#e-ask"); if (a) a.value = patch.ask ?? ""; }
+    patchItem(openId, patch, { immediate: el.tagName === "SELECT" || el.type === "checkbox" || el.type === "date" });
+    if (["status", "priority", "vetted"].includes(f)) renderSummary();
+  }
+  if (el.id === "d-me") { prefs.me = el.value; savePrefs(); delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); }
+  if (el.id === "d-text") drafts[openId] = el.value;
+});
+$("#sheet").addEventListener("change", e => {
+  const el = e.target;
+  if (el.id === "d-to") { prefs.draftTo = { ...(prefs.draftTo || {}), [openId]: el.value }; savePrefs(); delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); }
+  if (el.dataset.f === "status" && el.value === "contacted") {
+    const r = items.get(openId); if (r && !r.lastContact) { const d = new Date(); const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; patchItem(openId, { lastContact: iso }, { immediate: true }); const lc = $("#e-lastContact"); if (lc) lc.value = iso; }
+  }
+  if (el.dataset.f && openId) flushItem(openId);
+});
+$("#sheet").addEventListener("focusout", e => {
+  if (sheetStale && !(e.relatedTarget && $("#sheet").contains(e.relatedTarget))) setTimeout(() => { if (sheetStale && openId && !sheetBusy()) { sheetStale = false; renderSheet(); } }, 0);
+});
+$("#sheet").addEventListener("focusout", e => { if (e.target.dataset && e.target.dataset.f && openId) { const p = pending.get(openId); if (p) { clearTimeout(p.timer); flushItem(openId); } } });
+
+function rerenderPeople() { const r = items.get(openId); $("#people").innerHTML = renderPeople(r, mode === "readonly" ? " disabled" : ""); const f = $("#people [data-cform] input"); if (f) f.focus(); }
+function saveContact(i) {
+  const k = i === "new" ? "n" : i, g = n => ($(`#c-${n}-${k}`)?.value || "").trim();
+  const c = { name: g("name"), title: g("title"), email: g("email"), linkedin: g("linkedin"), why: g("why"), source: g("source") };
+  if (!c.name) { $(`#c-name-${k}`).focus(); return toast("Add the person's name first"); }
+  for (const f of ["linkedin", "source"]) {
+    if (!c[f]) continue;
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(c[f]) && /^[\w-]+(\.[\w-]+)+/.test(c[f])) c[f] = "https://" + c[f];
+    if (!safeUrl(c[f])) { $(`#c-${f}-${k}`).focus(); return toast("Links must start with https://"); }
+  }
+  const r = items.get(openId); const cs = [...(r.contacts || [])];
+  if (i === "new") cs.push(c); else cs[Number(i)] = { ...cs[Number(i)], ...c };
+  editingContact = null; patchItem(openId, { contacts: cs }, { immediate: true }); renderSheet(); toast("Saved " + c.name);
+}
+async function copyText(text, msg) {
+  try { await navigator.clipboard.writeText(text); toast(msg); }
+  catch { const ta = $("#d-text"); if (ta && ta.value === text) { ta.focus(); ta.select(); toast("Press Ctrl+C or ⌘C to copy"); } else toast("Copy isn't available here. Select the text and copy it."); }
+}
+
+/* modals */
+/* Live preview while picking a stage color; Cancel restores the saved colors. */
+$("#modal").addEventListener("input", e => {
+  const el = e.target; if (!el.dataset || !el.dataset.stageColor || !HEX.test(el.value)) return;
+  document.documentElement.style.setProperty(`--st-${el.dataset.stageColor}`, el.value);
+});
+$("#modal").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (e.target.id === "add-form") {
+    const name = $("#n-name").value.trim();
+    if (!name) { const er = $("#n-err"); er.hidden = false; er.textContent = "Enter the company's name."; return; }
+    const dup = [...items.values()].find(r => r.name.toLowerCase() === name.toLowerCase());
+    if (dup) { const er = $("#n-err"); er.hidden = false; er.textContent = `${dup.name} is already on the list.`; return; }
+    const id = await createItem({ name, sector: $("#n-sector").value, priority: $("#n-prio").value, owner: $("#n-owner").value.trim() });
+    closeModal(); openSheet(id); toast("Added " + name);
+  }
+  if (e.target.id === "settings-form") {
+    prefs.me = $("#s-me").value.trim(); savePrefs();
+    if (mode !== "readonly") {
+      const g = $("#s-goal").value, colors = {};
+      document.querySelectorAll("[data-stage-color]").forEach(el => { const id = el.dataset.stageColor; if (HEX.test(el.value) && el.value.toLowerCase() !== stageDefault(id).toLowerCase()) colors[id] = el.value.toLowerCase(); });
+      await saveSettings({ goal: g === "" ? 0 : Math.max(0, Number(g)), stageColors: colors });
+    }
+    closeModal(); if (openId) renderSheet(); toast("Settings saved");
+  }
+});
+
+/* board drag and drop */
+let dragId = null;
+$("#main").addEventListener("dragstart", e => { const c = e.target.closest(".card"); if (!c) return; dragId = c.dataset.id; e.dataTransfer.effectAllowed = "move"; try { e.dataTransfer.setData("text/plain", dragId); } catch {} });
+$("#main").addEventListener("dragover", e => { const col = e.target.closest(".col"); if (!col || !dragId) return; e.preventDefault(); document.querySelectorAll(".col.drop").forEach(x => x !== col && x.classList.remove("drop")); col.classList.add("drop"); });
+$("#main").addEventListener("dragleave", e => { const col = e.target.closest(".col"); if (col && !col.contains(e.relatedTarget)) col.classList.remove("drop"); });
+$("#main").addEventListener("drop", e => { const col = e.target.closest(".col"); if (!col || !dragId) return; e.preventDefault(); const s = col.dataset.col; if (items.get(dragId)?.status !== s) { patchItem(dragId, { status: s }, { immediate: true }); toast(`${items.get(dragId).name} moved to ${STAGE[s].label}`); } dragId = null; renderMain(); renderSummary(); });
+$("#main").addEventListener("dragend", () => { dragId = null; document.querySelectorAll(".col.drop").forEach(x => x.classList.remove("drop")); });
+
+window.addEventListener("beforeunload", () => { for (const id of pending.keys()) flushItem(id); });
+boot();
+})();
+</script>
