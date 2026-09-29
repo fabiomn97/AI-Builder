@@ -370,8 +370,8 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
       <div class="menu">
         <button class="btn" id="btn-data" type="button" aria-haspopup="true" aria-expanded="false"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 2v8m0 0L5 7m3 3 3-3M3 12v2h10v-2"/></svg>Data</button>
         <div class="menu-pop" id="menu-data" hidden>
-          <button type="button" data-act="xlsx">Export Excel<small>Companies and contacts, every field, one sheet each</small></button>
-          <button type="button" data-act="csv">Export CSV<small>One row per company</small></button>
+          <button type="button" data-act="xlsx">Export Excel<small>Same columns as the 2026 tracker, plus details, contacts and tiers</small></button>
+          <button type="button" data-act="csv">Export CSV<small>The 2026 tracker columns, one row per company</small></button>
           <button type="button" data-act="json">Export JSON<small>Full backup, including contacts</small></button>
           <label for="file-import" id="act-import">Import JSON<small>Merges by company; newer edits win</small></label>
           <hr>
@@ -440,7 +440,6 @@ textarea.f { height: auto; min-height: 84px; padding: 9px 10px; resize: vertical
 <div class="modal" id="modal" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 (() => {
 "use strict";
@@ -1119,12 +1118,52 @@ function stageDefault(id) {
 
 /* ——— export / import ——— */
 function exportRows() { return [...items.entries()].map(([id, r]) => ({ id, ...r })).sort((a, b) => a.name.localeCompare(b.name)); }
+/* ——— exports in the team's 2026 tracker format ———
+   Same 16 columns, header text and value vocabulary as "MIT Sloan Tech Summit External Sponsorship Tracker". */
+const SHEET_STATUS = { not_started: "todo", contacted: "Outreach Sent", talking: "Received Interest", proposal: "Negotiation", committed: "Confirmed", declined: "Declined", hold: "On hold" };
+const SHEET_STATUS_LIST = ["Outreach Sent", "Ghosted", "Declined", "Received Interest", "Negotiation", "Confirmed", "todo", "On hold"];
+const contactLines = r => (r.contacts || []).map(c => [c.name, c.title].filter(Boolean).join(", ")).join("\n");
+const emailList = r => (r.contacts || []).map(c => c.email).filter(Boolean).join(", ");
+const notesWithNext = r => [r.nextStep || r.nextDate ? `Next step: ${r.nextStep || "Follow up"}${r.nextDate ? ` (${fmtSheetDate(r.nextDate)})` : ""}` : "", r.notes].filter(Boolean).join("\n");
+const fmtSheetDate = s => { const d = parseDate(s); return d ? `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}` : ""; };
+/* Excel stores dates as UTC; build the calendar day in UTC so no timezone shifts it. */
+const xlDate = s => { const d = parseDate(s); return d ? new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())) : null; };
+const num = v => (v === null || v === undefined || v === "" || isNaN(Number(v))) ? null : Number(v);
+/* [header, value, width]; widths copied from the 2026 sheet. */
+const SHEET_COLS = [
+  ["Company", r => r.name, 22.63],
+  ["Status", r => SHEET_STATUS[r.status] || r.status, 18.63],
+  ["Last Outreach", r => xlDate(r.lastContact), 19.25],
+  ["Product", r => r.product, 29.25],
+  ["Tags", r => r.tags, 31.13],
+  ["Email", r => emailList(r), 39.5],
+  ["Potential Contacts", r => contactLines(r), 39.88],
+  ["Lead Warmth", r => r.leadWarmth || r.warm, 12.63],
+  ["Speaking Opportunity", r => r.speaking, 21.88],
+  ["Notes", r => notesWithNext(r), 12.63],
+  ["Owner", r => r.owner, 10.38],
+  ["- LAST YEAR -\nStatus", r => r.s26Status, 18.63],
+  ["- LAST YEAR -\nSponsor Tier", r => r.s26Tier, 16.88],
+  ["$", r => num(r.s26Amount), 9.75],
+  ["- LAST YEAR -\nLead Warmth", r => r.s26Warmth, 31],
+  ["-LAST YEAR -\nNotes", r => r.s26Notes, 33.63],
+];
+/* Extra tracker fields the 2026 sheet has no column for, on a second sheet. */
+const DETAIL_COLS = [
+  ["Company", r => r.name, 26], ["Priority", r => r.priority, 9], ["Suggested priority", r => r.suggestedPriority ?? r.priority, 11],
+  ["2027 tier", r => r.tier, 16], ["Suggested tier", r => r.suggestedTier ?? r.tier, 16], ["Ask ($)", r => num(r.ask), 11], ["Committed ($)", r => num(r.committed), 13],
+  ["Next step", r => r.nextStep, 30], ["Next-step date", r => xlDate(r.nextDate), 13], ["SLO vetted", r => r.vetted ? "Yes" : "No", 10],
+  ["Sector", r => r.sector, 20], ["Contact email on file", r => hasEmail(r) ? "Yes" : "No", 12], ["Warm signal", r => r.warm, 26],
+  ["Why they'd sponsor", r => r.fit, 50], ["MIT ties", r => r.mitTies, 50], ["Programs", r => r.programs, 40], ["Public channel", r => r.channel, 30],
+  ["Sources", r => (r.sources || []).join("\n"), 44], ["Research incomplete", r => r.unverified ? "Yes" : "", 11],
+  ["Last updated", r => r.updatedAt ? new Date(r.updatedAt).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "", 22],
+];
 function toCSV() {
-  const cols = ["name", "sector", "priority", "status", "tier", "owner", "ask", "committed", "nextStep", "nextDate", "lastContact", "vetted", "warm", "s26Status", "s26Tier", "s26Amount", "s26Warmth", "s26Notes", "product", "tags", "leadWarmth", "speaking", "contacts", "fit", "mitTies", "programs", "channel", "notes"];
   /* Cells that start like a formula are prefixed so spreadsheets show them as text. */
-  const q = v => { let s = v == null ? "" : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-  const rows = exportRows().map(r => cols.map(k => k === "contacts" ? (r.contacts || []).map(c => `${c.name} (${c.title})${c.email ? " <" + c.email + ">" : ""}`).join("; ") : k === "status" ? (STAGE[r.status]?.label || r.status) : r[k]).map(q).join(","));
-  return "\uFEFF" + [cols.join(","), ...rows].join("\r\n");
+  const cell = v => /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  const q = v => { let s = v == null ? "" : v instanceof Date ? `${v.getUTCMonth() + 1}/${v.getUTCDate()}/${v.getUTCFullYear()}` : String(v); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return cell(s); };
+  const rows = exportRows().map(r => SHEET_COLS.map(c => q(c[1](r))).join(","));
+  return "\uFEFF" + [SHEET_COLS.map(c => cell(c[0])).join(","), ...rows].join("\r\n");
 }
 async function offerFile(filename, text, type) {
   if (downloads) {
@@ -1139,44 +1178,84 @@ async function offerFile(filename, text, type) {
   try { await navigator.clipboard.writeText(text); toast("Download isn't available here, so the file was copied to your clipboard."); }
   catch { toast("Couldn't save or copy the file in this view."); }
 }
-/* Excel export: every field, one sheet of companies and one of people. */
-const XL_COLS = [
-  ["Company", r => r.name, 26], ["Sector", r => r.sector, 18], ["Priority", r => r.priority, 8], ["Suggested priority", r => r.suggestedPriority ?? r.priority, 10], ["2027 stage", r => STAGE[r.status]?.label || r.status, 15], ["Contact email on file", r => hasEmail(r) ? "Yes" : "No", 12],
-  ["Owner", r => r.owner, 14], ["Tier", r => r.tier, 16], ["Suggested tier", r => r.suggestedTier ?? r.tier, 16], ["Ask ($)", r => num(r.ask), 11], ["Committed ($)", r => num(r.committed), 13],
-  ["Next step", r => r.nextStep, 30], ["Next-step date", r => day(r.nextDate), 13], ["Last contact", r => day(r.lastContact), 13], ["SLO vetted", r => r.vetted ? "Yes" : "No", 10],
-  ["Warm signal", r => r.warm, 24], ["2026 status", r => r.s26Status || "Not approached", 16], ["2026 tier", r => r.s26Tier, 11], ["2026 amount ($)", r => num(r.s26Amount), 14],
-  ["2026 relationship notes", r => r.s26Warmth, 40], ["2026 notes", r => r.s26Notes, 40], ["Product", r => r.product, 28], ["Tags", r => r.tags, 32],
-  ["Lead warmth", r => r.leadWarmth, 18], ["Speaking opportunity", r => r.speaking, 20], ["Contacts (count)", r => (r.contacts || []).length, 9],
-  ["Contacts", r => (r.contacts || []).map(c => [c.name, c.title].filter(Boolean).join(", ") + (c.email ? ` <${c.email}>` : "")).join("\n"), 44],
-  ["Why they'd sponsor", r => r.fit, 50], ["MIT ties", r => r.mitTies, 50], ["Programs", r => r.programs, 40], ["Public channel", r => r.channel, 30],
-  ["Notes", r => r.notes, 44], ["Sources", r => (r.sources || []).join("\n"), 44], ["Research incomplete", r => r.unverified ? "Yes" : "", 10],
-  ["Last updated", r => r.updatedAt ? new Date(r.updatedAt).toLocaleString("en-US", { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : "", 22],
-];
-const num = v => (v === null || v === undefined || v === "") ? null : Number(v);
-const day = s => { const d = parseDate(s); return d || null; };
+/* ExcelJS is loaded only when someone exports (it's ~900 KB). */
+let excelLib = null;
+function loadExcelJS() {
+  if (window.ExcelJS) return Promise.resolve(window.ExcelJS);
+  if (!excelLib) excelLib = new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";
+    s.onload = () => window.ExcelJS ? res(window.ExcelJS) : rej(new Error("ExcelJS missing"));
+    s.onerror = () => { excelLib = null; rej(new Error("ExcelJS failed to load")); };
+    document.head.appendChild(s);
+  });
+  return excelLib;
+}
+const XL_GREEN = "FF356854", XL_STRIPE = "FFF6F8F9", XL_FONT = { name: "Arial", size: 10 };
+/* Header, stripes, fonts and number formats follow the 2026 sheet. */
+function styleSheet(ws, cols, rowCount, { freezeCols = 1, money = [], dates = [], links = [] } = {}) {
+  ws.columns = cols.map(c => ({ width: c[2] }));
+  ws.views = [{ state: "frozen", xSplit: freezeCols, ySplit: 1 }];
+  const head = ws.getRow(1); head.height = 30;
+  head.eachCell(cell => {
+    cell.font = { ...XL_FONT, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: XL_GREEN } };
+    cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+  });
+  for (let i = 2; i <= rowCount + 1; i++) {
+    const row = ws.getRow(i); row.height = 22.5;
+    for (let c = 1; c <= cols.length; c++) {
+      const cell = row.getCell(c);
+      cell.font = links.includes(c) && cell.value && cell.value.hyperlink ? { ...XL_FONT, underline: true, color: { argb: "FF0000FF" } } : { ...XL_FONT };
+      cell.alignment = { vertical: "middle", wrapText: true, ...(money.includes(c) ? { horizontal: "left" } : {}) };
+      if (money.includes(c)) cell.numFmt = '"$"#,##0';
+      if (dates.includes(c)) cell.numFmt = "M/d/yyyy";
+      if (i % 2 === 1) cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: XL_STRIPE } };
+      cell.border = { bottom: { style: "thin", color: { argb: "FFE3E6E8" } } };
+    }
+  }
+  ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: Math.max(1, rowCount + 1), column: cols.length } };
+}
 async function exportExcel() {
-  if (!window.XLSX) { toast("The Excel library didn't load. Check your connection, or use Export CSV."); return; }
+  let ExcelJS;
+  try { ExcelJS = await loadExcelJS(); } catch { toast("The Excel library didn't load. Check your connection, or use Export CSV."); return; }
   const rows = exportRows();
-  const aoa = [XL_COLS.map(c => c[0]), ...rows.map(r => XL_COLS.map(c => c[1](r)))];
-  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true, dateNF: "yyyy-mm-dd" });
-  ws["!cols"] = XL_COLS.map(c => ({ wch: c[2] }));
-  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: XL_COLS.length - 1 } }) };
-  const money$ = new Set(["Ask ($)", "Committed ($)", "2026 amount ($)"]);
-  XL_COLS.forEach((c, ci) => { if (!money$.has(c[0])) return; for (let ri = 1; ri <= rows.length; ri++) { const cell = ws[XLSX.utils.encode_cell({ r: ri, c: ci })]; if (cell && cell.t === "n") cell.z = "$#,##0"; } });
-  const people = [["Company", "Name", "Title", "Email", "LinkedIn", "Why this person", "Source", "2026 status", "2027 stage", "Owner"]];
-  rows.forEach(r => (r.contacts || []).forEach(c => people.push([r.name, c.name, c.title, c.email, c.linkedin, c.why, c.source, r.s26Status || "Not approached", STAGE[r.status]?.label || r.status, r.owner])));
-  const ws2 = XLSX.utils.aoa_to_sheet(people);
-  ws2["!cols"] = [26, 26, 36, 30, 40, 44, 44, 16, 15, 14].map(w => ({ wch: w }));
-  ws2["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: people.length - 1, c: 9 } }) };
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Companies");
-  XLSX.utils.book_append_sheet(wb, ws2, "Contacts");
-  const tiers = [["Benefit", ...TIER_INFO.map(t => `${t.id} ($${t.price.toLocaleString("en-US")})`)], ...BENEFITS.map(([g, l, v]) => [`${g}: ${l}`, ...v.map(x => x === true ? "Yes" : x === false ? "No" : x)])];
-  const ws3 = XLSX.utils.aoa_to_sheet(tiers); ws3["!cols"] = [{ wch: 44 }, ...TIER_INFO.map(() => ({ wch: 16 }))];
-  XLSX.utils.book_append_sheet(wb, ws3, "Tiers");
-  const buf = XLSX.write(wb, { bookType: "xlsx", type: "array", cellDates: true });
+  const wb = new ExcelJS.Workbook(); wb.creator = "STS 2027 Sponsor Pipeline"; wb.created = new Date();
+
+  const ws = wb.addWorksheet("Sponsorship Outreach List");
+  ws.addRow(SHEET_COLS.map(c => c[0]));
+  rows.forEach(r => {
+    const vals = SHEET_COLS.map(c => c[1](r) ?? "");
+    const li = (r.contacts || []).find(c => safeUrl(c.linkedin));
+    if (li && vals[6]) vals[6] = { text: vals[6], hyperlink: safeUrl(li.linkedin) };
+    ws.addRow(vals);
+  });
+  styleSheet(ws, SHEET_COLS, rows.length, { freezeCols: 3, money: [14], dates: [3], links: [7] });
+  const statusList = { type: "list", allowBlank: true, formulae: [`"${SHEET_STATUS_LIST.join(",")}"`] };
+  const last = Math.max(2, rows.length + 1);
+  ws.dataValidations.add(`B2:B${last}`, statusList); ws.dataValidations.add(`L2:L${last}`, statusList);
+
+  const wd = wb.addWorksheet("Tracker details");
+  wd.addRow(DETAIL_COLS.map(c => c[0]));
+  rows.forEach(r => wd.addRow(DETAIL_COLS.map(c => c[1](r) ?? "")));
+  styleSheet(wd, DETAIL_COLS, rows.length, { money: [6, 7], dates: [9] });
+
+  const PEOPLE = [["Company", 0, 26], ["Name", 0, 26], ["Title", 0, 36], ["Email", 0, 30], ["LinkedIn", 0, 40], ["Why this person", 0, 44], ["Source", 0, 44], ["Status", 0, 16], ["Owner", 0, 14]];
+  const wc = wb.addWorksheet("Contacts");
+  wc.addRow(PEOPLE.map(c => c[0]));
+  let n = 0;
+  rows.forEach(r => (r.contacts || []).forEach(c => { n++; wc.addRow([r.name, c.name, c.title, c.email, safeUrl(c.linkedin) ? { text: c.linkedin, hyperlink: safeUrl(c.linkedin) } : "", c.why, safeUrl(c.source) ? { text: c.source, hyperlink: safeUrl(c.source) } : c.source || "", SHEET_STATUS[r.status] || r.status, r.owner]); }));
+  styleSheet(wc, PEOPLE, n, { links: [5, 7] });
+
+  const TCOLS = [["Benefit", 0, 44], ...TIER_INFO.map(t => [`${t.id} ($${t.price.toLocaleString("en-US")})`, 0, 16])];
+  const wt = wb.addWorksheet("Tiers");
+  wt.addRow(TCOLS.map(c => c[0]));
+  BENEFITS.forEach(([g, l, v]) => wt.addRow([`${g}: ${l}`, ...v.map(x => x === true ? "Yes" : x === false ? "No" : x)]));
+  styleSheet(wt, TCOLS, BENEFITS.length);
+
+  const buf = await wb.xlsx.writeBuffer();
   const stamp = new Date().toISOString().slice(0, 10);
-  await offerFile(`sts-2027-sponsors-${stamp}.xlsx`, new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  await offerFile(`MIT_Sloan_Tech_Summit_27_External_Sponsorship_Tracker_${stamp}.xlsx`, new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
 }
 async function importJSON(file) {
   if (mode === "readonly") { toast("You can view this tracker but not edit it, so importing is off."); return; }
@@ -1229,7 +1308,7 @@ document.addEventListener("click", async e => {
     case "regen": delete drafts[openId]; $("#d-text").value = draftEmail(items.get(openId)); return;
     case "copy-draft": return copyText($("#d-text").value, "Email copied. Paste it into your mail app.");
     case "xlsx": return exportExcel();
-    case "csv": return offerFile("sts-2027-sponsors.csv", toCSV(), "text/csv");
+    case "csv": return offerFile(`MIT_Sloan_Tech_Summit_27_External_Sponsorship_Tracker_${new Date().toISOString().slice(0, 10)}.csv`, toCSV(), "text/csv");
     case "json": return offerFile("sts-2027-sponsors.json", JSON.stringify(exportRows(), null, 2), "application/json");
     case "settings": return openSettings();
     case "tiers": return openTiers();

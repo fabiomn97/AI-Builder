@@ -17,8 +17,11 @@ people, stage, owner, ask, next step, and a ready-to-edit outreach email.
 - Tiers follow the 2026 ladder (Platinum $25k, Gold $10k, Silver $5k, Entry $2k; 2026 called the top two Petabyte and Terabyte). Data → Sponsorship tiers shows the benefits. Update `TIER_INFO` and `BENEFITS` in `src/tracker.html` when the 2027 tiers are final.
 - Each company has a **2026** status (Confirmed, Received Interest, Outreach Sent, Ghosted, Declined,
   Not approached) with last year's tier, amount and notes. The list has a 2026 column you can sort and filter.
-- **Data → Export Excel** saves an .xlsx with two sheets: *Companies* (every field) and *Contacts*
-  (one row per person).
+- **Data → Export Excel** saves an .xlsx in the team's 2026 tracker format: a *Sponsorship Outreach
+  List* sheet with the same 16 columns, headers and values (`todo`, `Outreach Sent`, `Petabyte`, `$`),
+  plus *Tracker details*, *Contacts* and *Tiers* sheets. **Export CSV** uses the same 16 columns.
+  Stages map as: Not started → todo, Contacted → Outreach Sent, In conversation → Received Interest,
+  Proposal sent → Negotiation, Committed → Confirmed, Declined → Declined, On hold → On hold.
 - The team's 2026 tracker (contacts, emails, relationship notes, amounts) lives **only in the shared
   tracker**. It is deliberately not committed here, because this repository is public.
 
